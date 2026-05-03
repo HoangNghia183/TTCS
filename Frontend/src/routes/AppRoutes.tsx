@@ -49,7 +49,6 @@ const AppRoutes = () => (
             <Route path="about" element={<SuspenseWrap><AboutPage /></SuspenseWrap>} />
             <Route path="blog" element={<SuspenseWrap><BlogListPage /></SuspenseWrap>} />
             <Route path="blog/:slug" element={<SuspenseWrap><BlogDetailPage /></SuspenseWrap>} />
-
             {/* ── Cart page (accessible without login, guarded in checkout) ── */}
             <Route path="cart" element={<SuspenseWrap><CartPage /></SuspenseWrap>} />
 
@@ -61,6 +60,7 @@ const AppRoutes = () => (
                 <Route path="profile" element={<SuspenseWrap><ProfilePage /></SuspenseWrap>} />
                 <Route path="wishlist" element={<SuspenseWrap><WishlistPage /></SuspenseWrap>} />
                 <Route path="warranty" element={<SuspenseWrap><WarrantyRequestPage /></SuspenseWrap>} />
+                <Route path="my-book" element={"hai co"} ></Route>
             </Route>
         </Route>
 

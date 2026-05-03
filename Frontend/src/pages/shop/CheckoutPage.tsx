@@ -65,8 +65,9 @@ const CheckoutPage = () => {
                 toast.success("Đặt hàng thành công! 🎉");
                 navigate(`/orders/${order._id}`);
             }
-        } catch {
+        } catch(e) {
             toast.error("Không thể đặt hàng. Vui lòng thử lại.");
+            console.log(e);
         } finally {
             setLoading(false);
         }

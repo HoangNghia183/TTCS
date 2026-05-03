@@ -5,9 +5,11 @@ import {
     createProduct, 
     // updateProduct, // (Nếu bạn đã viết trong controller)
     // deleteProduct, // (Nếu bạn đã viết trong controller)
-    createProductReview 
+    createProductReview, 
+    deleteProduct
 } from '../controllers/productController.js';
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
+// import { createElement } from 'react';
 // import upload from '../middlewares/uploadMiddleware.js'; // Nếu có upload ảnh
 
 const router = express.Router();
@@ -20,8 +22,9 @@ router.route('/:id').get(getProductById);
 router.route('/:id/reviews').post(protectedRoute, createProductReview);
 
 // Admin Only
-router.route('/')
-    .post(protectedRoute, adminRoute, createProduct);
+router.route('/').post(protectedRoute, adminRoute, createProduct);
+
+router.route('/:id').delete(protectedRoute,adminRoute,deleteProduct);
 
 // router.route('/:id')
 //     .put(protectedRoute, adminRoute, updateProduct)

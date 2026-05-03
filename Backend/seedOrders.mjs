@@ -1,11 +1,7 @@
-// seedOrders.mjs  — run with: node seedOrders.mjs
-// Inserts realistic orders into MongoDB.
-// Reads MONGODB_URL from .env via dotenv.
-// IMPORTANT: Run seedCategories.mjs and seedProducts.mjs first.
+
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-// ── Inline schemas (avoids ESM/CJS issues with the app) ─────────────────────
 const UserSchema = new mongoose.Schema({ username: String, role: String, email: String, displayName: String, phone: String, address: String }, { strict: false });
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 

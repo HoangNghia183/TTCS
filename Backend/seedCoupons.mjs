@@ -1,10 +1,7 @@
-// seedCoupons.mjs  — run with: node seedCoupons.mjs
-// Inserts realistic discount coupons into MongoDB.
-// Reads MONGODB_URL from .env via dotenv.
+
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-// ── Coupon schema (inline, avoids ESM/CJS issues with the app) ───────────────
 const couponSchema = new mongoose.Schema(
     {
         code: { type: String, required: true, unique: true, uppercase: true },
@@ -19,16 +16,13 @@ const couponSchema = new mongoose.Schema(
 );
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 
-// ── helper: relative date from now ────────────────────────────────────────
 const daysFromNow = (days) => {
     const d = new Date();
     d.setDate(d.getDate() + days);
     return d;
 };
 
-// ── coupon data ────────────────────────────────────────────────────────────
 const coupons = [
-    // ── Seasonal / Welcome ──────────────────────────────────────────────────
     {
         code: 'WELCOME10',
         discountType: 'percent',
@@ -47,7 +41,7 @@ const coupons = [
         usageLimit: 500,
         usedCount: 132,
     },
-    // ── Flash Sales ─────────────────────────────────────────────────────────
+
     {
         code: 'FLASH20',
         discountType: 'percent',
@@ -66,7 +60,6 @@ const coupons = [
         usageLimit: 300,
         usedCount: 57,
     },
-    // ── Fixed-amount VIP ────────────────────────────────────────────────────
     {
         code: 'SAVE50K',
         discountType: 'fixed',
@@ -94,7 +87,6 @@ const coupons = [
         usageLimit: 100,
         usedCount: 18,
     },
-    // ── Category-specific (tracked by name convention, enforced by controller) ─
     {
         code: 'PETFOOD10',
         discountType: 'percent',
@@ -113,7 +105,6 @@ const coupons = [
         usageLimit: 400,
         usedCount: 74,
     },
-    // ── Birthday / Loyalty ──────────────────────────────────────────────────
     {
         code: 'BIRTHDAY30',
         discountType: 'percent',
@@ -132,7 +123,6 @@ const coupons = [
         usageLimit: 99999,
         usedCount: 2845,
     },
-    // ── App-only ────────────────────────────────────────────────────────────
     {
         code: 'APP15',
         discountType: 'percent',
@@ -144,10 +134,9 @@ const coupons = [
     },
 ];
 
-// ── main ───────────────────────────────────────────────────────────────────
 async function main() {
     await mongoose.connect(process.env.MONGODB_URL);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     let created = 0;
     let skipped = 0;
@@ -155,16 +144,16 @@ async function main() {
     for (const c of coupons) {
         const exists = await Coupon.findOne({ code: c.code.toUpperCase() });
         if (exists) {
-            console.log(`⏭  Skipped (already exists): ${c.code}`);
+            console.log(`Skipped (already exists): ${c.code}`);
             skipped++;
             continue;
         }
         await Coupon.create(c);
-        console.log(`✅ Created: ${c.code}  (${c.discountType === 'percent' ? c.value + '%' : c.value.toLocaleString('vi-VN') + '₫ off'})`);
+        console.log(`Created: ${c.code}  (${c.discountType === 'percent' ? c.value + '%' : c.value.toLocaleString('vi-VN') + '₫ off'})`);
         created++;
     }
 
-    console.log(`\n🎉 Done! ${created} coupons created, ${skipped} skipped.`);
+    console.log(`\n Done! ${created} coupons created, ${skipped} skipped.`);
     await mongoose.disconnect();
 }
 

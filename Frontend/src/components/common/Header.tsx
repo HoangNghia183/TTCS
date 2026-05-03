@@ -18,6 +18,7 @@ const Header = () => {
         { label: "Cửa Hàng", to: "/shop" },
         { label: "Blog", to: "/blog" },
         { label: "Về Chúng Tôi", to: "/about" },
+        { label: "Sách của tôi", to: "/my-book"}
     ];
 
     const isAdmin = user?.role === "admin" || user?.role === "staff";

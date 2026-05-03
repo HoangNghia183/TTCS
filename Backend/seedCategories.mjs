@@ -1,6 +1,3 @@
-// seedCategories.mjs  — run with: node seedCategories.mjs
-// Reseeds bookstore categories.
-// ⚠️  Drops all existing categories and products first for a clean slate.
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
@@ -15,7 +12,6 @@ const categorySchema = new mongoose.Schema(
 );
 const Category = mongoose.models.Category || mongoose.model('Category', categorySchema);
 
-// Also clear products so stale category ObjectId refs don't linger
 const productSchema = new mongoose.Schema({ name: String }, { strict: false });
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 
@@ -60,22 +56,22 @@ const categories = [
 
 async function main() {
     await mongoose.connect(process.env.MONGODB_URL);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Wipe existing categories & products for a clean slate
     await Product.deleteMany({});
-    console.log('🗑️  Cleared all products.');
+    console.log('Cleared all products.');
     await Category.deleteMany({});
-    console.log('🗑️  Cleared all categories.');
+    console.log('Cleared all categories.');
 
     let created = 0;
     for (const c of categories) {
         await Category.create(c);
-        console.log(`✅ Created: ${c.name} (slug: ${c.slug})`);
+        console.log(`Created: ${c.name} (slug: ${c.slug})`);
         created++;
     }
 
-    console.log(`\n🎉 Done! ${created} categories created.`);
+    console.log(`\n Done! ${created} categories created.`);
     await mongoose.disconnect();
 }
 
