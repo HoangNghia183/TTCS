@@ -24,6 +24,7 @@ const OrderHistoryPage = lazy(() => import("@/pages/user/OrderHistoryPage"));
 const OrderDetailPage = lazy(() => import("@/pages/user/OrderDetailPage"));
 const WishlistPage = lazy(() => import("@/pages/user/WishlistPage"));
 const WarrantyRequestPage = lazy(() => import("@/pages/user/WarrantyRequestPage"));
+const MyBookPage = lazy(() => import("@/pages/user/MyBookPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const BlogListPage = lazy(() => import("@/pages/blog/BlogListPage"));
 const BlogDetailPage = lazy(() => import("@/pages/blog/BlogDetailPage"));
@@ -60,7 +61,7 @@ const AppRoutes = () => (
                 <Route path="profile" element={<SuspenseWrap><ProfilePage /></SuspenseWrap>} />
                 <Route path="wishlist" element={<SuspenseWrap><WishlistPage /></SuspenseWrap>} />
                 <Route path="warranty" element={<SuspenseWrap><WarrantyRequestPage /></SuspenseWrap>} />
-                <Route path="my-book" element={"hai co"} ></Route>
+                <Route path="my-book" element={<SuspenseWrap><MyBookPage /></SuspenseWrap>} />
             </Route>
         </Route>
 

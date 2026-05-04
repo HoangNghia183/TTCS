@@ -81,10 +81,6 @@ const HomePage = () => {
 
   return (
     <div className="overflow-x-hidden">
-
-      {/* ============================================================ */}
-      {/*  1. HERO BANNER                                               */}
-      {/* ============================================================ */}
       <section className="relative min-h-[88vh] flex items-center overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1600&h=900&fit=crop"
@@ -158,10 +154,7 @@ const HomePage = () => {
       </section>
 
 
-
-      {/* ============================================================ */}
       {/*  3. FEATURED PETS                                             */}
-      {/* ============================================================ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {petsLoading ? (
           <ProductRowSkeleton />
@@ -174,10 +167,7 @@ const HomePage = () => {
           />
         )}
       </section>
-
-      {/* ============================================================ */}
-      {/*  4. WHY PETMART FEATURES                                      */}
-      {/* ============================================================ */}
+      {/*  4. WHY PETMART FEATURES  */}
       <section className="bg-muted/40 dark:bg-muted/20 py-16 mt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">

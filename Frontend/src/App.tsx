@@ -9,7 +9,7 @@ import AuthLayout from "./layouts/AuthLayout";
 function App() {
   return (
     <>
-      <Toaster position="top-right" richColors expand />
+      <Toaster position="top-left" richColors expand />
       <BrowserRouter>
         <Routes>
           {/* Auth routes use AuthLayout */}

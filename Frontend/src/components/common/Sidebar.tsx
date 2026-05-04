@@ -18,6 +18,7 @@ const adminLinks = [
 const userLinks = [
     { to: "/profile", label: "Tài khoản", emoji: "👤", end: true },
     { to: "/orders", label: "Đơn hàng", emoji: "📦" },
+    { to: "/my-book", label: "Sách đã mua", emoji: "📚" },
     { to: "/wishlist", label: "Yêu thích", emoji: "❤️" },
     { to: "/warranty", label: "Bảo hành", emoji: "🛡️" },
 ];

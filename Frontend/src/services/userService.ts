@@ -1,7 +1,6 @@
 import api from "@/lib/axios";
 import type { User } from "@/types/user";
 import type { ApiResponse } from "@/types/api";
-
 export interface UpdateProfilePayload {
     displayName?: string;
     bio?: string;
@@ -46,4 +45,5 @@ export const userService = {
     unblockUser: async (userId: string): Promise<void> => {
         await api.put(`/users/${userId}/unblock`);
     },
+
 };
