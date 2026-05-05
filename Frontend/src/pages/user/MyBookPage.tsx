@@ -15,7 +15,6 @@ const MyBookPage = () => {
     const loadData = async () => {
         try {
             const bookList = await userService.getOwnedBook();
-            console.log(bookList)
             setOwnedBook(bookList);
         } catch (error) {
             console.error(error);
@@ -50,13 +49,14 @@ const MyBookPage = () => {
                             >
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <img
-                                        src={book.images?.[0] || "/placeholder.png"}
+                                        src={book.images?.[0]}
                                         alt={book.name}
                                         className="w-full sm:w-40 h-40 object-cover rounded-3xl shrink-0"
                                     />
                                     <div className="flex-1">
+                                        {/* Link download */}
                                         <Link
-                                            to={`/product/${book._id || book.id}`}
+                                            to={`/product/${book._id}`}
                                             className="text-lg font-semibold text-foreground hover:text-[var(--pet-coral)]"
                                         >
                                             {book.name}

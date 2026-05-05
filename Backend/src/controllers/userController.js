@@ -76,7 +76,7 @@ export const updateUserProfile = async (req, res) => {
 export const getAllUsers = async (req, res) => {
     try {
         // Lấy tất cả user nhưng bỏ trường password
-        const users = await User.find({}).select('-password');
+        const users = await User.find({}).select('-hashedPassword');
         res.status(200).json(users);
     } catch (error) {
         console.error('Error in getAllUsers:', error);

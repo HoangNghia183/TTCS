@@ -21,7 +21,7 @@ router.route('/')
 
 router.route('/:id')
     .delete(protectedRoute, adminRoute, deleteUser);
-
+    
 router.get('/test', test);
 
 export default router;

@@ -10,8 +10,16 @@ const UserManagePage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        userService.getAllUsers().then((res) => setUsers(res.users)).catch(console.error).finally(() => setLoading(false));
+        loadData()
     }, []);
+    const loadData = async () => {
+        try {
+            const users = await userService.getAllUsers();
+            setUsers(users);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const toggleBlock = async (u: User) => {
         const isBlocked = (u as unknown as { isBlocked?: boolean }).isBlocked;

@@ -31,11 +31,9 @@ export const userService = {
         await api.put("/users/me/password", { oldPassword, newPassword });
     },
 
-    getAllUsers: async (page = 1, limit = 20): Promise<{ users: User[]; total: number }> => {
-        const res = await api.get<ApiResponse<{ users: User[]; total: number }>>(
-            `/users?page=${page}&limit=${limit}`
-        );
-        return res.data.data;
+    getAllUsers: async (page = 1, limit = 20): Promise<User[]> => {
+        const res = await api.get<any>(`/users?page=${page}&limit=${limit}`);
+        return res.data;
     },
 
     blockUser: async (userId: string): Promise<void> => {
