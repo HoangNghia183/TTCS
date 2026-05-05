@@ -45,5 +45,8 @@ export const userService = {
     unblockUser: async (userId: string): Promise<void> => {
         await api.put(`/users/${userId}/unblock`);
     },
-
+    getOwnedBook: async (): Promise<any> => {
+        const res = await api.get(`/products/owned-book`);
+        return res.data;
+    }
 };

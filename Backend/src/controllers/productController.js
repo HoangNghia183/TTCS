@@ -1,7 +1,7 @@
 import Product from '../models/Product.js';
 import Review from '../models/Review.js'; // Nhớ import Review Model
 import APIFeatures from '../utils/apiFeatures.js';
-
+import OwnedBook from '../models/OwnedBook.js';
 // @desc    Lấy tất cả sản phẩm (Có lọc nâng cao, sort, phân trang)
 // @route   GET /api/products
 export const getProducts = async (req, res) => {
@@ -184,3 +184,12 @@ export const deleteProduct = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getOwnedBook = async (req,res)=>{
+    try {
+        const bookList = await OwnedBook.findOne({userId:req.user._id}).populate('userId').populate('myBooks');
+        res.json(bookList.myBooks);
+    } catch (er) {
+        res.status(404).json({error:er.message});
+    }
+}

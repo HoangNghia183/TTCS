@@ -49,7 +49,6 @@ export const protectedRoute = async (req, res, next) => {
 
 // 2. Middleware Phân quyền (Authorization) - Chỉ cho phép Admin
 export const adminRoute = (req, res, next) => {
-    // req.user đã có được từ hàm protectedRoute chạy trước đó
     if (req.user && req.user.role === 'admin') {
         next();
     } else {
