@@ -108,6 +108,53 @@ export const deleteUser = async (req, res) => {
     }
 };
 
+// @desc    Khóa user
+// @route   PUT /api/users/:id/block
+// @access  Private/Admin
+export const blockUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { isBlocked: true },
+            { new: true }
+        ).select('-hashedPassword');
+
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(404).json({ message: 'Người dùng không tồn tại' });
+        }
+    } catch (error) {
+        console.error('Error in blockUser:', error);
+        res.status(500).json({ message: 'Lỗi server khi khóa user' });
+    }
+};
+
+// @desc    Mở khóa user
+// @route   PUT /api/users/:id/unblock
+// @access  Private/Admin
+export const unblockUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { isBlocked: false },
+            { new: true }
+        ).select('-hashedPassword');
+
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(404).json({ message: 'Người dùng không tồn tại' });
+        }
+    } catch (error) {
+        console.error('Error in unblockUser:', error);
+        res.status(500).json({ message: 'Lỗi server khi mở khóa user' });
+    }
+};
+export const setRole = async (req,res) => {
+    
+}
+
 // @desc    Test route
 // @route   GET /api/users/test
 export const test = async (req, res) => {

@@ -47,12 +47,16 @@ const CheckoutPage = () => {
         setLoading(true);
         try {
             const order = await orderService.createOrder({
-                items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+                items: items.map((i) => ({ product: i.product.id, qty: i.quantity })),
                 shippingAddress: address,
                 paymentMethod,
+                itemsPrice: subtotal,
+                shippingPrice: shippingFee,
+                totalPrice: total,
+                discountAmount: discount,
                 couponCode: couponCode || undefined,
             });
-
+            console.log("check")
             if (paymentMethod === "vnpay") {
                 const payUrl = await paymentService.createVNPayUrl({
                     orderId: order._id,

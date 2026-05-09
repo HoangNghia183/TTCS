@@ -35,6 +35,12 @@ const ProductManagePage = () => {
         }
     };
 
+    const handleEdit = (id: string) => {
+        // TODO: Mở modal hoặc điều hướng đến trang edit
+        console.log("Edit product:", id);
+        toast.info("Chức năng sửa đang được phát triển.");
+    };
+
     const columns: Column<Product>[] = [
         {
             key: "product", header: "Sản phẩm", render: (p) => (

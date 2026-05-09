@@ -4,8 +4,10 @@ import {
     updateUserProfile, 
     getAllUsers, 
     deleteUser,
+    blockUser,
+    unblockUser,
     test
-} from '../controllers/userController.js'; // Bạn nhớ tạo file userController nhé
+} from '../controllers/userController.js';
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -21,6 +23,12 @@ router.route('/')
 
 router.route('/:id')
     .delete(protectedRoute, adminRoute, deleteUser);
+
+router.route('/:id/block')
+    .put(protectedRoute, adminRoute, blockUser);
+
+router.route('/:id/unblock')
+    .put(protectedRoute, adminRoute, unblockUser);
     
 router.get('/test', test);
 

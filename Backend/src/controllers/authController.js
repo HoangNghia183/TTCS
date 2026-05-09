@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
 
-const ACCESS_TOKEN_TTL = '30m'; // 30 phút
+const ACCESS_TOKEN_TTL = '60m'; // 30 phút
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
 
 export const signUp = async (req, res) => {
@@ -24,7 +24,6 @@ export const signUp = async (req, res) => {
                 .json({ message: 'Username or email already in use' });
         } 
 
-        //Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await User.create({
@@ -73,7 +72,7 @@ export const signIn = async (req, res) => {
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: ACCESS_TOKEN_TTL },
         );
-
+        console.log(accessToken);
         //tạo refresh token
         const refreshToken = crypto.randomBytes(64).toString('hex');
 

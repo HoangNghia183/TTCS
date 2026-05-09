@@ -20,9 +20,20 @@ const OrderHistoryPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        orderService.getMyOrders().then(setOrders).catch(console.error).finally(() => setLoading(false));
+        loadData();
     }, []);
-
+    const loadData = async ()=>{
+        // orderService.getMyOrders().then(setOrders).catch(console.error).finally(() => setLoading(false));
+       try {
+        const res = await orderService.getMyOrders();
+        console.log(res);
+        await setOrders(res ?? []);
+       } catch (er) {
+        console.log(er);
+       }finally{
+        setLoading(false);
+       }
+    }
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
             <Sidebar mode="user" />

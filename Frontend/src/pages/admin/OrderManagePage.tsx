@@ -19,14 +19,21 @@ const OrderManagePage = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
 
-    const load = () => {
-        orderService.getAllOrders()
-            .then((res) => setOrders(res.orders))
-            .catch(console.error)
-            .finally(() => setLoading(false));
+    const loadData = async () => {
+        try {
+            const res = await orderService.getAllOrders();
+            // console.log("hai co tien",res);
+            await setOrders(res.orders);
+        } catch (er) {
+            
+        }finally{
+            await setLoading(false);
+        }
     };
 
-    useEffect(load, []);
+    useEffect(()=>{
+        loadData();
+    }, []);
 
     const handleStatus = async (id: string, status: OrderStatus) => {
         try {
@@ -68,7 +75,7 @@ const OrderManagePage = () => {
                     {Object.entries(ORDER_STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
             </div>
-            <DataTable columns={columns} data={filtered} keyExtractor={(o) => o._id} isLoading={loading} emptyText="Không có đơn hàng nào." />
+            <DataTable columns={columns} data={filtered} keyExtractor={(o) => o._id} isLoading={loading} />
         </div>
     );
 };

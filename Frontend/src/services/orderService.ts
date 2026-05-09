@@ -3,21 +3,27 @@ import type { Order, OrderStatus, ShippingAddress, PaymentMethod } from "@/types
 import type { ApiResponse } from "@/types/api";
 
 export interface CreateOrderPayload {
-    items: { productId: string; quantity: number }[];
+    items: { product: string; qty: number }[];
     shippingAddress: ShippingAddress;
     paymentMethod: PaymentMethod;
+    itemsPrice: number;
+    shippingPrice: number;
+    totalPrice: number;
+    discountAmount?: number;
     couponCode?: string;
     note?: string;
 }
 
 export const orderService = {
     createOrder: async (payload: CreateOrderPayload): Promise<Order> => {
+        console.log(payload)
         const res = await api.post<ApiResponse<Order>>("/orders", payload);
         return res.data.data;
     },
 
     getMyOrders: async (): Promise<Order[]> => {
         const res = await api.get<ApiResponse<Order[]>>("/orders/my");
+        console.log(res.data);
         return res.data.data;
     },
 
@@ -26,7 +32,7 @@ export const orderService = {
         return res.data.data;
     },
 
-    getAllOrders: async (page = 1, limit = 20): Promise<{ orders: Order[]; total: number }> => {
+    getAllOrders: async (page = 1, limit = 20): Promise<{ orders: Order[] }> => {
         const res = await api.get<ApiResponse<{ orders: Order[]; total: number }>>(
             `/orders?page=${page}&limit=${limit}`
         );
