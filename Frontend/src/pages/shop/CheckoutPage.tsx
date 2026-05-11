@@ -56,7 +56,6 @@ const CheckoutPage = () => {
                 discountAmount: discount,
                 couponCode: couponCode || undefined,
             });
-            console.log("check")
             if (paymentMethod === "vnpay") {
                 const payUrl = await paymentService.createVNPayUrl({
                     orderId: order._id,
@@ -67,7 +66,7 @@ const CheckoutPage = () => {
             } else {
                 clearCart();
                 toast.success("Đặt hàng thành công! 🎉");
-                navigate(`/orders/${order._id}`);
+                navigate(`/orders`);
             }
         } catch(e) {
             toast.error("Không thể đặt hàng. Vui lòng thử lại.");

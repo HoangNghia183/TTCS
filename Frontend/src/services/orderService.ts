@@ -22,9 +22,42 @@ export const orderService = {
     },
 
     getMyOrders: async (): Promise<Order[]> => {
-        const res = await api.get<ApiResponse<Order[]>>("/orders/my");
-        console.log(res.data);
-        return res.data.data;
+        const res = await api.get<ApiResponse<any[]>>("/orders/my");
+        // Backend now returns wrapped response with data field
+        const ordersData = res.data.data || [];
+        
+        // Map status from backend format to frontend format
+        const statusMap: Record<string, string> = {
+            'Pending': 'pending',
+            'Processing': 'confirmed',
+            'Shipping': 'shipping',
+            'Delivered': 'delivered',
+            'Cancelled': 'cancelled'
+        };
+
+        return ordersData.map((order: any) => ({
+            _id: order._id,
+            userId: typeof order.user === 'string' ? order.user : order.user?._id || '',
+            items: (order.orderItems || []).map((item: any) => ({
+                productId: typeof item.product === 'string' ? item.product : item.product?._id || '',
+                productName: item.name || '',
+                productImage: item.image || '',
+                quantity: item.qty || 0,
+                price: item.price || 0,
+            })),
+            shippingAddress: order.shippingAddress || {},
+            subtotal: order.itemsPrice || 0,
+            discount: order.discountAmount || 0,
+            shippingFee: order.shippingPrice || 0,
+            total: order.totalPrice || 0,
+            couponCode: order.couponCode,
+            paymentMethod: order.paymentMethod || 'cod',
+            paymentStatus: order.isPaid ? 'paid' : 'unpaid',
+            status: statusMap[order.status] || 'pending',
+            note: order.note,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+        })) as Order[];
     },
 
     getOrderById: async (id: string): Promise<Order> => {
