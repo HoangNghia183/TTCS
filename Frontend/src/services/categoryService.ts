@@ -1,12 +1,7 @@
 import api from "@/lib/axios";
+import type { Category } from "@/types/category";
 
-export interface DbCategory {
-    _id: string;
-    name: string;
-    slug: string;
-    image?: string;
-    description?: string;
-}
+export interface DbCategory extends Category {}
 
 // Module-level session cache
 let categoryCache: DbCategory[] | null = null;

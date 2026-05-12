@@ -1,13 +1,12 @@
 export interface Coupon {
     _id: string;
     code: string;
-    discountType: "percentage" | "fixed";
-    discountValue: number;
+    discountType: "percent" | "fixed";
+    value: number;
     minOrderValue: number;
-    maxDiscount?: number;
-    expiresAt: string;
-    isActive: boolean;
+    expirationDate: string;
     usageLimit: number;
     usedCount: number;
     createdAt: string;
+    updatedAt: string;
 }

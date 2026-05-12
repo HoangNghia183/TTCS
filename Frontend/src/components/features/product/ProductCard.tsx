@@ -60,18 +60,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {/* ===== IMAGE ===== */}
             <div className="relative overflow-hidden aspect-square bg-muted/30">
                 <img
-                    src={product.image}
+                    src={product.images?.[0]}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                 />
 
-                {/* Badge */}
-                {product.badge && (
-                    <div className={`absolute top-3 left-3 ${badgeConfig[product.badge].className}`}>
-                        {badgeConfig[product.badge].label}
-                    </div>
-                )}
+                {/* Badge - derived from product data */}
+                {(() => {
+                    let badge = null;
+                    if (product.originalPrice && product.originalPrice > product.price) {
+                        badge = { label: `-${Math.round((1 - product.price / product.originalPrice) * 100)}%`, className: "badge-sale" };
+                    } else if (product.sold > 200) {
+                        badge = { label: "🔥 HOT", className: "badge-hot" };
+                    }
+                    return badge && (
+                        <div className={`absolute top-3 left-3 ${badge.className}`}>
+                            {badge.label}
+                        </div>
+                    );
+                })()}
 
                 {/* Wishlist */}
                 <button
@@ -91,7 +99,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 </button>
 
                 {/* Out of stock overlay */}
-                {!product.inStock && (
+                {product.stock <= 0 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <span className="bg-white text-foreground text-xs font-bold px-3 py-1 rounded-full">Hết hàng</span>
                     </div>
@@ -108,12 +116,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
                 {/* Breed & Age */}
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <span>🏷️ {product.breed}</span>
-                    {product.age && <><span className="opacity-40">•</span><span>⏰ {product.age}</span></>}
+                    <span>🏷️ {product.specifications?.["Giống"] || "N/A"}</span>
+                    {product.specifications?.["Tuổi"] && <><span className="opacity-40">•</span><span>⏰ {product.specifications["Tuổi"]}</span></>}
                 </p>
 
                 {/* Rating */}
-                <StarRating rating={product.rating} reviewCount={product.reviewCount} />
+                <StarRating rating={product.averageRating} reviewCount={product.reviewCount} />
 
 
                 {/* Price */}
@@ -136,14 +144,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 {/* Buttons */}
                 <div className="flex gap-2 mt-2">
                     <Link
-                        to={`/product/${product.id}`}
+                        to={`/product/${product._id}`}
                         className="btn-pet-secondary flex-1 justify-center text-xs py-2"
                     >
                         Xem chi tiết
                     </Link>
                     <button
                         onClick={handleAddToCart}
-                        disabled={!product.inStock || added}
+                        disabled={product.stock <= 0 || added}
                         className={`flex-1 justify-center text-xs py-2 rounded-xl font-semibold
                        flex items-center gap-1.5 transition-all duration-200
                        ${added

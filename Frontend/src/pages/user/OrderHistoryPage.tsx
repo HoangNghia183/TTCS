@@ -8,11 +8,11 @@ import { ORDER_STATUS_LABELS } from "@/utils/constants";
 import Loading from "@/components/common/Loading";
 
 const STATUS_COLORS: Record<string, string> = {
-    pending: "bg-amber-100 text-amber-700",
-    confirmed: "bg-blue-100 text-blue-700",
-    shipping: "bg-indigo-100 text-indigo-700",
-    delivered: "bg-emerald-100 text-emerald-700",
-    cancelled: "bg-red-100 text-red-600",
+    Pending: "bg-amber-100 text-amber-700",
+    Processing: "bg-blue-100 text-blue-700",
+    Shipping: "bg-indigo-100 text-indigo-700",
+    Delivered: "bg-emerald-100 text-emerald-700",
+    Cancelled: "bg-red-100 text-red-600",
 };
 
 const OrderHistoryPage = () => {
@@ -57,9 +57,9 @@ const OrderHistoryPage = () => {
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm text-muted-foreground">{order.items.length} sản phẩm</p>
+                                    <p className="text-sm text-muted-foreground">{order.orderItems.length} sản phẩm</p>
                                     <div className="flex items-center gap-4">
-                                        <p className="font-bold text-[var(--pet-coral)]">{formatCurrency(order.total)}</p>
+                                        <p className="font-bold text-[var(--pet-coral)]">{formatCurrency(order.totalPrice)}</p>
                                         <Link to={`/orders/${order._id}`} className="text-sm text-[var(--pet-coral)] hover:underline font-semibold">Xem chi tiết →</Link>
                                     </div>
                                 </div>

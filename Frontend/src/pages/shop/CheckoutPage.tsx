@@ -47,7 +47,7 @@ const CheckoutPage = () => {
         setLoading(true);
         try {
             const order = await orderService.createOrder({
-                items: items.map((i) => ({ product: i.product.id, qty: i.quantity })),
+                items: items.map((i) => ({ product: i.product._id, qty: i.quantity })),
                 shippingAddress: address,
                 paymentMethod,
                 itemsPrice: subtotal,
@@ -59,7 +59,7 @@ const CheckoutPage = () => {
             if (paymentMethod === "vnpay") {
                 const payUrl = await paymentService.createVNPayUrl({
                     orderId: order._id,
-                    amount: order.total,
+                    amount: order.totalPrice,
                 });
                 clearCart();
                 window.location.href = payUrl;
@@ -132,7 +132,7 @@ const CheckoutPage = () => {
                         <h2 className="font-bold mb-4" style={{ fontFamily: "'Nunito', sans-serif" }}>Tóm tắt đơn hàng</h2>
                         <div className="flex flex-col gap-2 text-sm mb-4">
                             {items.map((i) => (
-                                <div key={i.product.id} className="flex justify-between text-muted-foreground">
+                                <div key={i.product._id} className="flex justify-between text-muted-foreground">
                                     <span className="truncate">{i.product.name} × {i.quantity}</span>
                                     <span className="font-semibold text-foreground shrink-0 ml-2">{formatCurrency(i.product.price * i.quantity)}</span>
                                 </div>

@@ -7,11 +7,11 @@ import { ORDER_STATUS_LABELS } from "@/utils/constants";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
-    pending: "bg-amber-100 text-amber-700",
-    confirmed: "bg-blue-100 text-blue-700",
-    shipping: "bg-indigo-100 text-indigo-700",
-    delivered: "bg-emerald-100 text-emerald-700",
-    cancelled: "bg-red-100 text-red-600",
+    Pending: "bg-amber-100 text-amber-700",
+    Processing: "bg-blue-100 text-blue-700",
+    Shipping: "bg-indigo-100 text-indigo-700",
+    Delivered: "bg-emerald-100 text-emerald-700",
+    Cancelled: "bg-red-100 text-red-600",
 };
 
 const OrderManagePage = () => {
@@ -22,7 +22,7 @@ const OrderManagePage = () => {
     const loadData = async () => {
         try {
             const res = await orderService.getAllOrders();
-            // console.log("hai co tien",res);
+            console.log("all orders :",res);
             await setOrders(res.orders);
         } catch (er) {
             
@@ -51,7 +51,7 @@ const OrderManagePage = () => {
         { key: "id", header: "Mã đơn", render: (o) => <span className="font-mono text-xs font-semibold">#{o._id.slice(-8).toUpperCase()}</span> },
         { key: "customer", header: "Khách hàng", render: (o) => <span className="text-foreground">{o.shippingAddress.fullName}</span> },
         { key: "date", header: "Ngày", render: (o) => formatDate(o.createdAt) },
-        { key: "total", header: "Tổng tiền", render: (o) => <span className="font-bold text-[var(--pet-coral)]">{formatCurrency(o.total)}</span> },
+        { key: "total", header: "Tổng tiền", render: (o) => <span className="font-bold text-[var(--pet-coral)]">{formatCurrency(o.totalPrice)}</span> },
         {
             key: "status", header: "Trạng thái", render: (o) => (
                 <select

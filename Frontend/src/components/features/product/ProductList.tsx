@@ -46,7 +46,7 @@ const ProductList = ({ products, title, subtitle, viewAllLink }: ProductListProp
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {products.map((product, idx) => (
                     <div
-                        key={product.id}
+                        key={product._id}
                         className="animate-fade-in-up"
                         style={{ animationDelay: `${idx * 0.07}s` }}
                     >

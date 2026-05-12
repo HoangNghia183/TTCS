@@ -15,7 +15,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
             {/* Image */}
             <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-muted/30">
                 <img
-                    src={product.image}
+                    src={product.images?.[0] || ""}
                     alt={product.name}
                     className="w-full h-full object-cover"
                 />
@@ -27,7 +27,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
                     style={{ fontFamily: "'Nunito', sans-serif" }}>
                     {product.name}
                 </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">{product.breed} · {product.age}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{product.specifications?.["Giống"] || "N/A"} · {product.specifications?.["Tuổi"] || "N/A"}</p>
                 <p className="text-sm font-extrabold text-[var(--pet-coral)] mt-1">
                     {formatCurrency(product.price)}
                 </p>
@@ -37,7 +37,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
             <div className="flex flex-col items-end gap-2 shrink-0">
                 {/* Remove */}
                 <button
-                    onClick={() => removeItem(product.id)}
+                    onClick={() => removeItem(product._id)}
                     className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all"
                     aria-label="Xóa"
                 >
@@ -50,7 +50,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
                 {/* Qty stepper */}
                 <div className="flex items-center border border-border rounded-xl overflow-hidden">
                     <button
-                        onClick={() => updateQty(product.id, quantity - 1)}
+                        onClick={() => updateQty(product._id, quantity - 1)}
                         className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted transition-all"
                     >
                         −
@@ -59,7 +59,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
                         {quantity}
                     </span>
                     <button
-                        onClick={() => updateQty(product.id, quantity + 1)}
+                        onClick={() => updateQty(product._id, quantity + 1)}
                         className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted transition-all"
                     >
                         +

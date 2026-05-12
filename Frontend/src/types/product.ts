@@ -1,20 +1,20 @@
-export type ProductCategory = "fiction" | "children" | "self-help" | "science" | "literature" | "business" | "accessory";
-export type ProductBadge = "new" | "hot" | "sale";
-
 export interface Product {
-    id: string;
+    _id: string;
     name: string;
-    breed: string;
-    age: string;
+    slug: string;
+    description: string;
     price: number;
     originalPrice?: number;
-    image: string;
-    category: ProductCategory;
-    rating: number;
+    images: string[];
+    category: string; // ObjectId reference
+    specifications: Record<string, string>;
+    stock: number;
+    sold: number;
+    views: number;
+    averageRating: number;
     reviewCount: number;
-    badge?: ProductBadge;
-    description: string;
-    inStock: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CartItem {

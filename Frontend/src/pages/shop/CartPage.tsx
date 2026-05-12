@@ -33,7 +33,7 @@ const CartPage = () => {
                 {/* Items list */}
                 <div className="flex-1 flex flex-col gap-4">
                     {items.map((item) => (
-                        <CartItemComponent key={item.product.id} item={item} />
+                        <CartItemComponent key={item.product._id} item={item} />
                     ))}
                 </div>
 

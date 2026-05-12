@@ -2,13 +2,14 @@ export interface User {
     _id: string;
     username: string;
     email: string;
+    hashedPassword: string;
     displayName: string;
-    role?: 'customer' | 'admin' | 'staff';
     avatarUrl?: string;
+    avatarId?: string;
     bio?: string;
+    role: 'customer' | 'admin' | 'staff';
     phone?: string;
     address?: string;
-    isBlocked?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt: string;
+    updatedAt: string;
 }

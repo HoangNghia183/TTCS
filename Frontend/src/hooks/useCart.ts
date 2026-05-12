@@ -9,14 +9,14 @@ export const useCart = () => {
         useCartStore();
 
     const isInCart = (productId: string) =>
-        items.some((i) => i.product.id === productId);
+        items.some((i) => i.product._id === productId);
 
     const getQty = (productId: string) =>
-        items.find((i) => i.product.id === productId)?.quantity ?? 0;
+        items.find((i) => i.product._id === productId)?.quantity ?? 0;
 
     const toggleItem = (product: Product) => {
-        if (isInCart(product.id)) {
-            removeItem(product.id);
+        if (isInCart(product._id)) {
+            removeItem(product._id);
         } else {
             addItem(product);
         }
