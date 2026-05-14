@@ -117,7 +117,7 @@ export const getAllOrders = async (req, res) => {
         const total = await Order.countDocuments();
 
         res.json({
-            orders,
+            data:orders,
             total,
             page,
             pages: Math.ceil(total / limit)

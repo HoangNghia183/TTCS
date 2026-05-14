@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
 
-const ACCESS_TOKEN_TTL = '60m'; // 30 phút
+const ACCESS_TOKEN_TTL = '30m'; // 30 phút
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
-
+// const REFRESH_TOKEN_TTL = 1 * 60 * 1000
 export const signUp = async (req, res) => {
     try {
         const { username, email, password, firstName, lastName } = req.body; 
@@ -52,12 +52,16 @@ export const signIn = async (req, res) => {
 
         //lấy hash password từ db để so sánh
         const user = await User.findOne({ username });
+        
         if (!user) { //nếu không tìm thấy user
             return res
                 .status(401)
                 .json({ message: 'Invalid username or password' });
         }
-
+        if(user.isBlocked) {
+            return res
+                .status(401)
+                .json({message:"tài khoản đã bị khoá"})}
         //so sánh password
         const passwordCorrect = await bcrypt.compare(password, user.hashedPassword);
         if (!passwordCorrect) {
