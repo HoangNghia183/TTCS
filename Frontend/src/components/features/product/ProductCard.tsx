@@ -31,11 +31,11 @@ const StarRating = ({ rating, reviewCount }: { rating: number; reviewCount: numb
 };
 
 // Badge map
-const badgeConfig = {
-    new: { label: "MỚI", className: "badge-new" },
-    hot: { label: "🔥 HOT", className: "badge-hot" },
-    sale: { label: "SALE", className: "badge-sale" },
-};
+// const badgeConfig = {
+//     new: { label: "MỚI", className: "badge-new" },
+//     hot: { label: "🔥 HOT", className: "badge-hot" },
+//     sale: { label: "SALE", className: "badge-sale" },
+// };
 
 const ProductCard = ({ product }: ProductCardProps) => {
     const addItem = useCartStore((s) => s.addItem);

@@ -32,18 +32,30 @@ api.interceptors.response.use(
 
     originalRequest._retryCount = originalRequest._retryCount || 0;
 
-    if (error.response.status === 403 && originalRequest._retryCount < 5) {
+    // Xử lý 401 (access token hết hạn) hoặc 403 (refresh token hết hạn)
+    if ((error.response.status === 401 || error.response.status === 403) && originalRequest._retryCount < 1) {
       originalRequest._retryCount += 1;
 
-      console.log("refresh", originalRequest._retryCount);
+      console.log("Attempting to refresh token...", originalRequest._retryCount);
 
       try {
         const res = await api.post("/auth/refresh", {}, { withCredentials: true });
-        const { accessToken } = res.data.accessToken; 
+        const { accessToken } = res.data;
+
+        if (!accessToken) {
+          throw new Error('No access token returned from refresh');
+        }
 
         useAuthStore.getState().setAccessToken(accessToken);
-      }
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${accessToken}`,
+        };
+
+        return api(originalRequest);
+      } 
       catch (err) {
+        console.log("Refresh failed, clearing auth state");
         useAuthStore.getState().clearState();
         return Promise.reject(err);
       }

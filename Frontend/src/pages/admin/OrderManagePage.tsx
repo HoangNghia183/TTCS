@@ -22,10 +22,10 @@ const OrderManagePage = () => {
     const loadData = async () => {
         try {
             const res = await orderService.getAllOrders();
-            console.log("all orders :",res);
-            await setOrders(res.orders);
+            // console.log("all orders :",res);
+            await setOrders(res);
         } catch (er) {
-            
+            console.log("err :",er);
         }finally{
             await setLoading(false);
         }

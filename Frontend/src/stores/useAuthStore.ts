@@ -70,21 +70,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     fetchMe: async () => {
         try {
             set({ loading: true });
-        const res = await authService.fetchMe();
-        
-        // KIỂM TRA LOG Ở ĐÂY ĐỂ DEBUG
-        console.log("Raw response from service:", res);
+            const res = await authService.fetchMe();
+            
+            console.log("Raw response from service:", res);
 
-        // Giả sử res trả về object { user: {...} }, ta chỉ lấy phần ruột
-        // Nếu res chính là user info thì giữ nguyên, nếu bọc trong 'user' thì lấy res.user
-        const userData = res.user ? res.user : res; 
-        
-        set({ user: userData }); 
-        
-        console.log("User saved to store:", userData);
+            // Giả sử res trả về object { user: {...} }, ta chỉ lấy phần ruột
+            // Nếu res chính là user info thì giữ nguyên, nếu bọc trong 'user' thì lấy res.user
+            const userData = res.user ? res.user : res; 
+            
+            set({ user: userData }); 
+            
+            console.log("User saved to store:", userData);
         } catch (error) {
             console.error("Lấy thông tin người dùng thất bại:", error);
-            set({ user: null, accessToken: null });
+            // Don't clear accessToken here - only clear user
+            set({ user: null });
             toast.error("Lấy thông tin người dùng thất bại. Vui lòng đăng nhập lại.");
             throw error;
         } finally {
@@ -94,20 +94,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     refresh: async () => {
         try {
             set ({ loading: true });
-            const {user, fetchMe} = get();
 
             const response = await authService.refresh();
-            const newAccessToken = response.accessToken || response; // Bắt trường hợp trả về object hoặc string
-        
-            get().setAccessToken(newAccessToken);
+            const newAccessToken = typeof response === 'string' ? response : response?.accessToken;
 
-            if (!user) {
-                await fetchMe(); //nếu chưa có thông tin người dùng, gọi fetchMe để lấy thông tin
+            if (!newAccessToken) {
+                throw new Error('Refresh did not return a valid access token');
             }
+
+            get().setAccessToken(newAccessToken);
+            
+            // Only fetch user info if we don't have it yet
+            const {user} = get();
+            if (!user) {
+                try {
+                    await get().fetchMe();
+                } catch (fetchErr) {
+                    // Silently fail - user can still access some pages
+                    console.warn("Could not restore user profile:", fetchErr);
+                }
+            }
+            
             return newAccessToken;
         } catch (error) {
-            console.error("Làm mới access token thất bại:", error);
-            toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+            console.error("Token refresh failed:", error);
             return false;
         } finally {
             set ({ loading: false });

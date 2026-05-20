@@ -3,12 +3,12 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import Loading from "@/components/common/Loading";
 
 const ProtectedRoute = () => {
-    const { accessToken, user, loading } = useAuthStore();
+    const { accessToken, loading } = useAuthStore();
     const location = useLocation();
 
     if (loading) return <Loading fullPage text="Đang xác thực..." />;
 
-    if (!accessToken || !user) {
+    if (!accessToken) {
         return <Navigate to="/signin" replace state={{ from: location.pathname }} />;
     }
 

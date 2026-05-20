@@ -32,11 +32,10 @@ export const orderService = {
         return res.data.data;
     },
 
-    getAllOrders: async (page = 1, limit = 20): Promise<{ orders: Order[] }> => {
-        const res = await api.get<ApiResponse<{ orders: Order[]; total: number }>>(
+    getAllOrders: async (page = 1, limit = 20): Promise<Order[]> => {
+        const res = await api.get<ApiResponse<Order[]>>(
             `/orders?page=${page}&limit=${limit}`
         );
-        console.log(res.data);
         return res.data.data;
     },
 
