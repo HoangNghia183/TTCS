@@ -23,7 +23,7 @@ const PRICE_PRESETS = [
 ];
 
 // Placeholder entry for "all categories"
-const ALL_ENTRY: DbCategory = { _id: "", name: "Tất Cả", slug: "" };
+const ALL_ENTRY: DbCategory = { _id: "", name: "Tất Cả", slug: "",createdAt:"",updatedAt:"" };
 
 const ProductFilter = ({ filters, onChange }: ProductFilterProps) => {
     const set = (partial: Partial<ProductFilters>) =>

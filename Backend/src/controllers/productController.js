@@ -110,12 +110,18 @@ export const createProductReview = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
     try {
-        console.log('📝 Creating product...');
         console.log('Body:', req.body);
         console.log('Files:', req.files ? Object.keys(req.files) : 'none');
 
-        const { name, price, stock, description = 'no des', category = '69de7714e07554db0c605008' } = req.body;
+        let { name, price, stock, description, category,specifications  } = req.body;
+        const bodyString = specifications;
 
+        const result = bodyString.split(/\r?\n/).reduce((acc, line) => {
+          const [key, ...val] = line.split(':');
+          if (key && val.length) acc[key.trim()] = val.join(':').trim();
+          return acc;
+        }, {});
+        specifications=result;
         if (!name || !price) {
             return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
         }
@@ -136,7 +142,7 @@ export const createProduct = async (req, res) => {
             description,
             category,
             user: req.user._id,
-            specifications:{}
+            specifications
         };
 
         const files = req.files || {};
@@ -178,6 +184,7 @@ export const createProduct = async (req, res) => {
                 throw new Error(`Book upload failed: ${bookErr.message}`);
             }
         }
+
 
         const product = new Product(productData);
         console.log(product);

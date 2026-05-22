@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { productService } from "@/services/productService";
 import type { Product } from "@/types/product";
 import { toast } from "sonner";
-
+import { categoryService } from "@/services/categoryService";
+import type { Category } from "@/types/category";
 interface Props {
     onClose: () => void;
     onCreated: (p: Product) => void;
@@ -12,13 +13,24 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
     const [form, setForm] = useState({
         name: "",
         price: "",
-        stock: 0,
+        stock: "",
+        category: "",
         imgFile: null as File | null,
-        bookFile: null as File | null
+        bookFile: null as File | null,
+        specifications:"",
+        description:""
     });
+    const [categoriesList,setCategoriesList] = useState<Category[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(()=>{
+        loadData();
+    },[])
+    const loadData = async ()=>{
+        const catsList = await categoryService.getAll();
+        await setCategoriesList(catsList);
+    }
+    const handleChange = (e:any) => {
         const { name, value, files } = e.target;
 
         setForm(prev => ({
@@ -29,7 +41,7 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        console.log(form);
         if (!form.name || !form.price) {
             toast.error("Vui lòng nhập tên và giá sản phẩm");
             return;
@@ -47,13 +59,13 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
             toast.success("Tạo sản phẩm thành công");
             onCreated(created);
             // Reset form
-            setForm({
-                name: "",
-                price: "",
-                stock: 0,
-                imgFile: null,
-                bookFile: null
-            });
+            // setForm({
+            //     name: "",
+            //     price: "",
+            //     stock: 0,
+            //     imgFile: null,
+            //     bookFile: null
+            // });
             onClose();
         } catch (err) {
             toast.error("Tạo sản phẩm thất bại. Vui lòng thử lại");
@@ -105,7 +117,31 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
                     onChange={handleChange}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
-
+                <select name="category"
+                    onChange={handleChange}
+                    value={form.category}
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                    <option value="">chọn thể loại</option>
+                    {categoriesList.map(val=>{
+                        return <option key={val._id} value={val._id}>{val.name}</option>
+                    })}
+                </select>
+                <textarea name="specifications" 
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    value={form.specifications}
+                    onChange={handleChange}
+                    placeholder={`nhập thông tin cụ thể khác dạng:\nname1 : value1\nname2 : value2`}
+                >
+                </textarea>
+                <input 
+                    type="text" 
+                    name="description"
+                    value={form.description}
+                    onChange={handleChange}
+                    placeholder="miêu tả"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
                 <div>
                     <label className="block mb-1 text-sm font-medium text-gray-700">
                         Ảnh sản phẩm
