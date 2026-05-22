@@ -6,7 +6,7 @@ export const getCollection = async (req, res) => {
     try {
         // Tìm collection của user và populate (lấy chi tiết) thông tin sản phẩm
         const collection = await Collection.findOne({ user: req.user._id })
-            .populate('products', 'name price images stock slug');
+            .populate('products', 'name price images stock slug dLoadLink');
 
         if (!collection) {
             // Nếu chưa có thì trả về mảng rỗng

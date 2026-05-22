@@ -2,6 +2,7 @@ import Product from '../models/Product.js';
 import Review from '../models/Review.js'; // Nhớ import Review Model
 import APIFeatures from '../utils/apiFeatures.js';
 import OwnedBook from '../models/OwnedBook.js';
+import { cloudinary } from '../config/cloudinary.js';
 // @desc    Lấy tất cả sản phẩm (Có lọc nâng cao, sort, phân trang)
 // @route   GET /api/products
 export const getProducts = async (req, res) => {
@@ -109,28 +110,83 @@ export const createProductReview = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock, images, specifications } = req.body;
+        console.log('📝 Creating product...');
+        console.log('Body:', req.body);
+        console.log('Files:', req.files ? Object.keys(req.files) : 'none');
 
-        // Tự động tạo slug từ tên (VD: "Mèo Anh" -> "meo-anh")
+        const { name, price, stock, description = 'no des', category = '69de7714e07554db0c605008' } = req.body;
+
+        if (!name || !price) {
+            return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
+        }
+
         const slug = name.toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Bỏ dấu tiếng Việt
-            .replace(/ /g, '-');
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[đĐ]/g, 'd')
+            .replace(/[^a-z0-9 ]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
 
-        const product = new Product({
+        const productData = {
             name,
             slug,
-            price,
+            price: Number(price),
+            originPrice:price,
+            stock: stock ? Number(stock) : 0,
             description,
             category,
-            stock,
-            images,
-            specifications, // Thêm thông số kỹ thuật (quan trọng cho pet shop)
             user: req.user._id,
-        });
+            specifications:{}
+        };
 
+        const files = req.files || {};
+
+        // Upload image file to Cloudinary
+        if (files.imgFile && Array.isArray(files.imgFile) && files.imgFile[0]) {
+            try {
+                const file = files.imgFile[0];
+                const base64 = file.buffer.toString('base64');
+                const dataUri = `data:${file.mimetype};base64,${base64}`;
+                console.log('📸 Uploading image to Cloudinary...');
+                const result = await cloudinary.uploader.upload(dataUri, {
+                    folder: 'imgBook',
+                    resource_type:'image'
+                });
+                productData.images = [result.secure_url || result.url];
+                console.log('✅ Image uploaded:', productData.images[0]);
+            } catch (imgErr) {
+                console.error('❌ Image upload error:', imgErr.message);
+                throw new Error(`Image upload failed: ${imgErr.message}`);
+            }
+        }
+
+        // Upload book file to Cloudinary
+        if (files.bookFile && Array.isArray(files.bookFile) && files.bookFile[0]) {
+            try {
+                const file = files.bookFile[0];
+                const base64 = file.buffer.toString('base64');
+                const dataUri = `data:${file.mimetype};base64,${base64}`;
+                console.log('📚 Uploading book file to Cloudinary...');
+                const result = await cloudinary.uploader.upload(dataUri, {
+                    folder: 'bookDLoad',
+                    resource_type: 'raw'
+                });
+                productData.dLoadLink = result.secure_url || result.url;
+                console.log('✅ Book file uploaded:', productData.dLoadLink);
+            } catch (bookErr) {
+                console.error('❌ Book upload error:', bookErr.message);
+                throw new Error(`Book upload failed: ${bookErr.message}`);
+            }
+        }
+
+        const product = new Product(productData);
+        console.log(product);
         const createdProduct = await product.save();
+        console.log('✅ Product created:', createdProduct._id);
         res.status(201).json(createdProduct);
     } catch (error) {
+        console.error('❌ Create product error:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({ message: error.message });
     }
 };
@@ -185,11 +241,11 @@ export const deleteProduct = async (req, res) => {
     }
 };
 
-export const getOwnedBook = async (req,res)=>{
+export const getOwnedBook = async (req, res) => {
     try {
-        const bookList = await OwnedBook.findOne({userId:req.user._id}).populate('userId').populate('myBooks');
+        const bookList = await OwnedBook.findOne({ userId: req.user._id }).populate('userId').populate('myBooks');
         res.json(bookList.myBooks);
     } catch (er) {
-        res.status(404).json({error:er.message});
+        res.status(404).json({ error: er.message });
     }
 }

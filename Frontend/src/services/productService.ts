@@ -76,19 +76,19 @@ export const productService = {
 
     /** Fetch a single product by id. Backend returns the document directly. */
     getById: async (id: string): Promise<Product> => {
-        const res = await api.get<RawSingleResponse>(`/products/${id}`);
+        const res = await api.get<any>(`/products/${id}`);
         return res.data as Product;
     },
 
     create: async (data: FormData): Promise<Product> => {
-        const res = await api.post<RawSingleResponse>("/products", data, {
+        const res = await api.post<any>("/products", data, {
             headers: { "Content-Type": "multipart/form-data" },
         });
         return res.data as Product;
     },
-
+// RawSingleResponse
     update: async (id: string, data: FormData): Promise<Product> => {
-        const res = await api.put<RawSingleResponse>(`/products/${id}`, data, {
+        const res = await api.put<any>(`/products/${id}`, data, {
             headers: { "Content-Type": "multipart/form-data" },
         });
         return res.data as Product;

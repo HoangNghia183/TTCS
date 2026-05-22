@@ -4,10 +4,12 @@ import type { Product } from "@/types/product";
 import DataTable, { type Column } from "@/components/features/admin/DataTable";
 import { formatCurrency } from "@/utils/format";
 import { toast } from "sonner";
+import AddProductModal from "@/components/features/admin/AddProductModal";
 
 const ProductManagePage = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showAdd, setShowAdd] = useState(false);
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
@@ -71,8 +73,17 @@ const ProductManagePage = () => {
                 <h1 className="section-title">
                     📚 Quản Lý Sản Phẩm ({loading ? "..." : products.length})
                 </h1>
-                <button className="btn-pet-primary">+ Thêm sản phẩm</button>
+                <button onClick={() => setShowAdd(true)} className="btn-pet-primary">+ Thêm sản phẩm</button>
             </div>
+            {showAdd && (
+                <AddProductModal
+                    onClose={() => setShowAdd(false)}
+                    onCreated={(product) => {
+                        setProducts((prev) => [product, ...prev]);
+                        setShowAdd(false);
+                    }}
+                />
+            )}
 
             {loading ? (
                 <div className="animate-pulse flex flex-col gap-3">

@@ -28,8 +28,10 @@ const productSchema = new mongoose.Schema({
     
     // Hai trường này mình giữ lại để query nhanh, không cần tính toán lại mỗi lần
     averageRating: { type: Number, default: 0 },
-    reviewCount: { type: Number, default: 0 }
-
+    reviewCount: { type: Number, default: 0 },
+    
+    // Liên kết tải xuống (DDownloadLink)
+    dLoadLink: { type: String ,default:""}
 }, { 
     timestamps: true,
     // CẤU HÌNH QUAN TRỌNG ĐỂ VIRTUALS HOẠT ĐỘNG

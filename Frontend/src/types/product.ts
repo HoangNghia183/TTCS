@@ -13,6 +13,7 @@ export interface Product {
     views: number;
     averageRating: number;
     reviewCount: number;
+    dLoadLink?: string;
     createdAt: string;
     updatedAt: string;
 }
