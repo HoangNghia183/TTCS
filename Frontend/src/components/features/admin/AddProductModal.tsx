@@ -1,56 +1,83 @@
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { productService } from "@/services/productService";
 import type { Product } from "@/types/product";
 import { toast } from "sonner";
 import { categoryService } from "@/services/categoryService";
 import type { Category } from "@/types/category";
+
 interface Props {
     onClose: () => void;
     onCreated: (p: Product) => void;
 }
 
+interface FormValues {
+    name: string;
+    price: string;
+    stock: string | number;
+    category: string;
+    imgFile: File | null;
+    bookFile: File | null;
+    specifications: string;
+    description: string;
+}
+
 const AddProductModal = ({ onClose, onCreated }: Props) => {
-    const [form, setForm] = useState({
-        name: "",
-        price: "",
-        stock: "",
-        category: "",
-        imgFile: null as File | null,
-        bookFile: null as File | null,
-        specifications:"",
-        description:""
-    });
-    const [categoriesList,setCategoriesList] = useState<Category[]>([]);
+    const [categoriesList, setCategoriesList] = useState<Category[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(()=>{
-        loadData();
-    },[])
-    const loadData = async ()=>{
-        const catsList = await categoryService.getAll();
-        await setCategoriesList(catsList);
-    }
-    const handleChange = (e:any) => {
-        const { name, value, files } = e.target;
+    // Khởi tạo useForm từ react-hook-form
+    const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
+        defaultValues: {
+            name: "",
+            price: "",
+            stock: "",
+            category: "",
+            imgFile: null,
+            bookFile: null,
+            specifications: "",
+            description: ""
+        }
+    });
 
-        setForm(prev => ({
-            ...prev,
-            [name]: files ? files[0] : name === "stock" ? +value : value
-        }));
+    // Watch values để gán vào thuộc tính value của các input (giúp giữ nguyên cơ chế hoạt động cũ của UI)
+    const formValues = watch();
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        const catsList = await categoryService.getAll();
+        setCategoriesList(catsList);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log(form);
-        if (!form.name || !form.price) {
+    // Hàm xử lý thay đổi file riêng biệt cho react-hook-form
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, files } = e.target;
+        if (files && files.length > 0) {
+            setValue(name as "imgFile" | "bookFile", files[0]);
+        }
+    };
+
+    const onSubmit = async (data: FormValues) => {
+        if (!data.name || !data.price) {
             toast.error("Vui lòng nhập tên và giá sản phẩm");
             return;
         }
 
         const formData = new FormData();
 
-        Object.entries(form).forEach(([key, value]) => {
-            formData.append(key, value as string | Blob);
+        // Append tất cả dữ liệu vào FormData giống như logic ban đầu
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                // Chuyển stock thành số nếu tồn tại như hàm handleChange cũ
+                if (key === "stock" && value !== "") {
+                    formData.append(key, String(+value));
+                } else {
+                    formData.append(key, value as string | Blob);
+                }
+            }
         });
 
         try {
@@ -58,19 +85,11 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
             const created = await productService.create(formData);
             toast.success("Tạo sản phẩm thành công");
             onCreated(created);
-            // Reset form
-            // setForm({
-            //     name: "",
-            //     price: "",
-            //     stock: 0,
-            //     imgFile: null,
-            //     bookFile: null
-            // });
             onClose();
         } catch (err) {
             toast.error("Tạo sản phẩm thất bại. Vui lòng thử lại");
             console.error(err);
-        } finally {
+        }  {
             setSubmitting(false);
         }
     };
@@ -78,7 +97,7 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <form
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmit(onSubmit)}
                 className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-xl space-y-4"
             >
                 <div className="flex justify-between items-center">
@@ -94,51 +113,47 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
                     </button>
                 </div>
                 <input
-                    name="name"
+                    {...register("name")}
                     placeholder="Tên sản phẩm"
-                    value={form.name}
-                    onChange={handleChange}
+                    value={formValues.name}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 <input
-                    name="price"
+                    {...register("price")}
                     type="number"
                     placeholder="Giá"
-                    value={form.price}
-                    onChange={handleChange}
+                    value={formValues.price}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
 
                 <input
-                    name="stock"
+                    {...register("stock")}
                     type="number"
                     placeholder="Số lượng"
-                    value={form.stock}
-                    onChange={handleChange}
+                    value={formValues.stock}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
-                <select name="category"
-                    onChange={handleChange}
-                    value={form.category}
+                <select 
+                    {...register("category")}
+                    value={formValues.category}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                     <option value="">chọn thể loại</option>
-                    {categoriesList.map(val=>{
+                    {categoriesList.map(val => {
                         return <option key={val._id} value={val._id}>{val.name}</option>
                     })}
                 </select>
-                <textarea name="specifications" 
+                <textarea 
+                    {...register("specifications")}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    value={form.specifications}
-                    onChange={handleChange}
+                    value={formValues.specifications}
                     placeholder={`nhập thông tin cụ thể khác dạng:\nname1 : value1\nname2 : value2`}
                 >
                 </textarea>
                 <input 
                     type="text" 
-                    name="description"
-                    value={form.description}
-                    onChange={handleChange}
+                    {...register("description")}
+                    value={formValues.description}
                     placeholder="miêu tả"
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
@@ -150,7 +165,7 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
                     <input
                         name="imgFile"
                         type="file"
-                        onChange={handleChange}
+                        onChange={handleFileChange}
                         className="w-full p-2 rounded-lg border border-gray-300 text-gray-700
             file:mr-3 file:px-3 file:py-1
             file:border-0 file:rounded
@@ -166,7 +181,7 @@ const AddProductModal = ({ onClose, onCreated }: Props) => {
                     <input
                         name="bookFile"
                         type="file"
-                        onChange={handleChange}
+                        onChange={handleFileChange}
                         className="w-full p-2 rounded-lg border border-gray-300 text-gray-700
             file:mr-3 file:px-3 file:py-1
             file:border-0 file:rounded

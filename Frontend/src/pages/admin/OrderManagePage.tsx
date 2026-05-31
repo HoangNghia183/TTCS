@@ -41,7 +41,7 @@ const OrderManagePage = () => {
             setOrders((prev) => prev.map((o) => o._id === id ? { ...o, status } : o));
             toast.success("Cập nhật trạng thái thành công!");
         } catch {
-            toast.error("Không thể cập nhật. Vui lòng thử lại.");
+            toast.error("Không thể cập nhật. Vui lòng thử lại."); 
         }
     };
 

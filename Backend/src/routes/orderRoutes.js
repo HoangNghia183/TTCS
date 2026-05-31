@@ -3,7 +3,8 @@ import {
     addOrderItems, 
     getAllOrders, 
     getMyOrders, 
-    getOrderById, 
+    getOrderById,   
+    setOrderStatus,
     // getOrders
     // getOrders (Admin)
 } from '../controllers/orderController.js';
@@ -16,6 +17,7 @@ router.route('/').post(protectedRoute, addOrderItems);
 router.route('/').get(protectedRoute,adminRoute,getAllOrders);
 router.route('/my').get(protectedRoute, getMyOrders);
 router.route('/:id').get(protectedRoute, getOrderById);
+router.route('/:id/status').put(protectedRoute, adminRoute, setOrderStatus);
 
 
 

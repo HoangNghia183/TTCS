@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import Coupon from '../models/Coupon.js';
+import OwnedBook from '../models/OwnedBook.js';
 
 // @desc    Tạo đơn hàng mới
 // @route   POST /api/orders
@@ -146,3 +147,55 @@ export const getOrderById = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const setOrderStatus = async (req,res)=>{
+    try {
+        const { status, paymentStatus } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+
+        const prevStatus = order.status;
+
+        // update payment result if provided
+        if (paymentStatus) {
+            order.paymentResult = order.paymentResult || {};
+            order.paymentResult.status = paymentStatus;
+            order.paymentResult.update_time = new Date().toISOString();
+ 
+            if (paymentStatus.toLowerCase() === 'completed' || paymentStatus.toLowerCase() === 'success') {
+                order.isPaid = true;
+                order.paidAt = new Date();
+            }
+        }
+
+        // update order status if provided
+        if (status) {
+            order.status = status;
+        }
+
+        if (order.status === 'Delivered') {
+            order.isDelivered = true;
+            order.deliveredAt = new Date();
+        }
+
+        const updatedOrder = await order.save();
+
+        // When status changed to Shipping or Delivered, add products to OwnedBook
+        if (prevStatus !== updatedOrder.status && ['Shipping', 'Delivered','Processing'].includes(updatedOrder.status)) {
+            const userId = updatedOrder.user;
+            for (const item of updatedOrder.orderItems) {
+                const productId = item.product;
+                await OwnedBook.findOneAndUpdate(
+                    { userId },
+                    { $addToSet: { myBooks: productId } },
+                    { upsert: true, new: true }
+                );
+            }
+        }
+
+        res.json({ success: true, data: updatedOrder });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}

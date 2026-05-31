@@ -22,7 +22,7 @@ const PaymentResultPage = lazy(() => import("@/pages/payment/PaymentResultPage")
 const ProfilePage = lazy(() => import("@/pages/user/ProfilePage"));
 const OrderHistoryPage = lazy(() => import("@/pages/user/OrderHistoryPage"));
 const OrderDetailPage = lazy(() => import("@/pages/user/OrderDetailPage"));
-const WishlistPage = lazy(() => import("@/pages/user/WishlistPage"));
+const WishlistPage = lazy(() => import("@/pages/user/WishlistPage"));  
 const WarrantyRequestPage = lazy(() => import("@/pages/user/WarrantyRequestPage"));
 const MyBookPage = lazy(() => import("@/pages/user/MyBookPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
