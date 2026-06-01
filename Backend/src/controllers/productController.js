@@ -9,7 +9,7 @@ export const getProducts = async (req, res) => {
     try {
         // Sử dụng APIFeatures để xử lý query params
         // VD: ?keyword=meo&price[gte]=100000&sort=-price&page=1
-        const features = new APIFeatures(Product.find(), req.query)
+        const features = new APIFeatures(Product.find().populate("category"), req.query)
             .search()  // Tìm theo tên
             .filter()  // Lọc theo giá, danh mục...
             .sort()    // Sắp xếp

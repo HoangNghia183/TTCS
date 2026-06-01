@@ -8,9 +8,9 @@ import AddProductModal from "@/components/features/admin/AddProductModal";
 
 const ProductManagePage = () => {
     const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showAdd, setShowAdd] = useState(false);
-
+    const [loading, setLoading] = useState<boolean>(true);
+    const [showModal,setShowModal] = useState<string>("")
+    const [productSelect,setProductSelect] = useState<Product>({} as Product)
     const loadProducts = useCallback(async () => {
         setLoading(true);
         try {
@@ -36,13 +36,12 @@ const ProductManagePage = () => {
             toast.error("Xóa thất bại. Vui lòng thử lại.");
         }
     };
-
-    // const handleEdit = (id: string) => {
-    //     // TODO: Mở modal hoặc điều hướng đến trang edit
-    //     console.log("Edit product:", id);
-    //     toast.info("Chức năng sửa đang được phát triển.");
-    // };
-
+    const handleUpdate = async (id: string) => {
+        
+        const product:Product = await productService.getById(id);
+        setProductSelect(product);
+        setShowModal("update");
+    }
     const columns: Column<Product>[] = [
         {
             key: "product", header: "Sản phẩm", render: (p) => (
@@ -50,18 +49,18 @@ const ProductManagePage = () => {
                     <img src={p.images?.[0] || ""} alt={p.name} className="w-10 h-10 rounded-xl object-cover border border-border" />
                     <div>
                         <p className="text-sm font-semibold text-foreground line-clamp-1">{p.name}</p>
-                        <p className="text-xs text-muted-foreground">{p.specifications?.["Giống"] || "Không xác định"}</p>
+                        {/* <p className="text-xs text-muted-foreground">{p.specifications?.["Giống"] || "Không xác định"}</p> */}
                     </div>
                 </div>
             )
         },
-        { key: "category", header: "Loại", render: (p) => <span className="badge-new capitalize">{p.category}</span> },
+        { key: "category", header: "Loại", render: (p) => <span className="badge-new capitalize">{p.category.name}</span> },
         { key: "price", header: "Giá", render: (p) => <span className="font-bold text-[var(--pet-coral)]">{formatCurrency(p.price)}</span> },
         { key: "rating", header: "⭐", render: (p) => <span className="text-sm text-foreground">{p.averageRating.toFixed(1)} ({p.reviewCount})</span> },
         {
             key: "stock", header: "Tồn kho", render: (p) => (
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.stock > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
-                    {p.stock > 0 ? "Còn hàng" : "Hết hàng"}
+                    {p.stock > 0 ? p.stock : "hết hàng"}
                 </span>
             )
         },
@@ -73,18 +72,28 @@ const ProductManagePage = () => {
                 <h1 className="section-title">
                     📚 Quản Lý Sản Phẩm ({loading ? "..." : products.length})
                 </h1>
-                <button onClick={() => setShowAdd(true)} className="btn-pet-primary">+ Thêm sản phẩm</button>
+                <button onClick={() => setShowModal("add")} className="btn-pet-primary">+ Thêm sản phẩm</button>
             </div>
-            {showAdd && (
+            {showModal=="add" && (
                 <AddProductModal
-                    onClose={() => setShowAdd(false)}
+                    product={{} as Product}
+                    onClose={() => setShowModal("")}
                     onCreated={(product) => {
                         setProducts((prev) => [product, ...prev]);
-                        setShowAdd(false);
+                        setShowModal("");
                     }}
                 />
             )}
-
+            {showModal=="update" && (
+                <AddProductModal
+                    product={productSelect}
+                    onClose={()=>setShowModal("")}
+                    onCreated={(newProduct)=>{
+                        setProducts(books=>books.map(book=>book._id ? book : newProduct))
+                        setShowModal("");
+                    }}
+                />
+            )}
             {loading ? (
                 <div className="animate-pulse flex flex-col gap-3">
                     {Array.from({ length: 6 }).map((_, i) => (
@@ -99,7 +108,7 @@ const ProductManagePage = () => {
                     emptyText="Không có sản phẩm nào."
                     actions={(p) => (
                         <div className="flex gap-2 justify-end">
-                            <button className="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all font-semibold">Sửa</button>
+                            <button onClick={() => handleUpdate(p._id)} className="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all font-semibold">Sửa</button>
                             <button onClick={() => handleDelete(p._id)} className="text-xs px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-all font-semibold">Xóa</button>
                         </div>
                     )}

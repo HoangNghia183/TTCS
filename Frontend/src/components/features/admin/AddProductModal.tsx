@@ -9,11 +9,12 @@ import type { Category } from "@/types/category";
 interface Props {
     onClose: () => void;
     onCreated: (p: Product) => void;
+    product:Product;
 }
 
 interface FormValues {
     name: string;
-    price: string;
+    price: string | number;
     stock: string | number;
     category: string;
     imgFile: File | null;
@@ -22,21 +23,21 @@ interface FormValues {
     description: string;
 }
 
-const AddProductModal = ({ onClose, onCreated }: Props) => {
+const AddProductModal = ({ onClose, onCreated, product }: Props) => {
     const [categoriesList, setCategoriesList] = useState<Category[]>([]);
     const [submitting, setSubmitting] = useState(false);
-
+    console.log(product);
     // Khởi tạo useForm từ react-hook-form
     const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
         defaultValues: {
-            name: "",
-            price: "",
-            stock: "",
-            category: "",
+            name: product?.name,
+            price: product.price ?? "",
+            stock: product.stock ?? "",
+            category: product.category._id ?? "",
             imgFile: null,
             bookFile: null,
-            specifications: "",
-            description: ""
+            specifications:  "",
+            description: product.description ?? ""
         }
     });
 

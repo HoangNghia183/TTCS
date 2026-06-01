@@ -36,7 +36,7 @@ const OrderDetailPage = () => {
                 </div>
 
                 {/* Status tracker */}
-                {order.status !== "cancelled" && (
+                {order.status !== "Cancelled" && (
                     <div className="bg-white dark:bg-card rounded-2xl border border-border p-5 mb-5">
                         <div className="flex items-center justify-between">
                             {STATUS_STEPS.map((step, i) => (
@@ -92,7 +92,7 @@ const OrderDetailPage = () => {
                         <div className="bg-white dark:bg-card rounded-2xl border border-border p-5">
                             <h2 className="font-bold mb-3" style={{ fontFamily: "'Nunito', sans-serif" }}>Thanh toán</h2>
                             <p className="text-sm text-muted-foreground">Phương thức: <span className="text-foreground font-semibold">{order.paymentMethod.toUpperCase()}</span></p>
-                            <p className="text-sm text-muted-foreground">Trạng thái: <span className="text-foreground font-semibold">{PAYMENT_STATUS_LABELS[order.paymentStatus]}</span></p>
+                            <p className="text-sm text-muted-foreground">Trạng thái: <span className="text-foreground font-semibold">{PAYMENT_STATUS_LABELS[order.status]}</span></p>
                             <p className="text-sm text-muted-foreground">Ngày: <span className="text-foreground font-semibold">{formatDate(order.createdAt)}</span></p>
                         </div>
                     </div>

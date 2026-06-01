@@ -1,3 +1,5 @@
+import type { Category } from "./category";
+
 export interface Product {
     _id: string;
     name: string;
@@ -6,7 +8,7 @@ export interface Product {
     price: number;
     originalPrice?: number;
     images: string[];
-    category: string; // ObjectId reference
+    category: Category; // ObjectId reference
     specifications: Record<string, string>;
     stock: number;
     sold: number;
@@ -25,18 +27,18 @@ export interface CartItem {
 
 export interface BookCategory {
     id: string;
-    label: string;
+    name: string;
     emoji: string;
 }
 
 // Static category list — used by ProductFilter and HomePage
 export const petCategories: BookCategory[] = [
-    { id: "all", label: "Tất Cả", emoji: "📚" },
-    { id: "fiction", label: "Tiểu Thuyết", emoji: "📖" },
-    { id: "children", label: "Thiếu Nhi", emoji: "🎈" },
-    { id: "self-help", label: "Kỹ Năng", emoji: "💡" },
-    { id: "science", label: "Khoa Học", emoji: "🔬" },
-    { id: "literature", label: "Văn Học", emoji: "✒️" },
-    { id: "business", label: "Kinh Doanh", emoji: "💼" },
-    { id: "accessory", label: "VPP", emoji: "✏️" },
+    { id: "all", name: "Tất Cả", emoji: "📚" },
+    { id: "fiction", name: "Tiểu Thuyết", emoji: "📖" },
+    { id: "children", name: "Thiếu Nhi", emoji: "🎈" },
+    { id: "self-help", name: "Kỹ Năng", emoji: "💡" },
+    { id: "science", name: "Khoa Học", emoji: "🔬" },
+    { id: "literature", name: "Văn Học", emoji: "✒️" },
+    { id: "business", name: "Kinh Doanh", emoji: "💼" },
+    { id: "accessory", name: "VPP", emoji: "✏️" },
 ];

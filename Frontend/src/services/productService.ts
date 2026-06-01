@@ -25,10 +25,10 @@ interface RawProductListResponse {
     total: number;
 }
 
-interface RawSingleResponse {
-    // controller returns the document directly (no wrapper)
-    [key: string]: unknown;
-}
+// interface RawSingleResponse {
+//     // controller returns the document directly (no wrapper)
+//     [key: string]: unknown;
+// }
 
 export const productService = {
     /** Fetch paginated product list. Adapts backend { products, page, pages, total } */
@@ -40,10 +40,6 @@ export const productService = {
         if (filters.limit) params.append("limit", String(filters.limit));
         if (filters.search) params.append("keyword", filters.search);  // backend uses "keyword"
 
-        // ── KEY FIX: resolve category slug → MongoDB ObjectId ──────────────
-        // Product.category is an ObjectId ref in MongoDB, not a plain string.
-        // resolveId returns null when the slug isn't in the DB — in that case
-        // we skip the filter entirely to avoid a Mongoose CastError → 500.
         if (filters.category) {
             const resolvedId = await categoryService.resolveId(filters.category);
             if (resolvedId) params.append("category", resolvedId);
