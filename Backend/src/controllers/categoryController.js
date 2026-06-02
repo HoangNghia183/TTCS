@@ -15,7 +15,7 @@ export const getCategories = async (req, res) => {
 // @route   POST /api/categories
 export const createCategory = async (req, res) => {
     try {
-        const { name, slug, description, image } = req.body;
+        const { name, description, image } = req.body;
 
         const categoryExists = await Category.findOne({ name });
         if (categoryExists) {
@@ -24,9 +24,8 @@ export const createCategory = async (req, res) => {
 
         const category = await Category.create({
             name,
-            slug: slug || name.toLowerCase().replace(/ /g, '-'), // Tự tạo slug nếu không gửi lên
-            description,
-            image
+            slug: name.toLowerCase().replace(/ /g, '-'), // Tự tạo slug nếu không gửi lên
+            description
         });
 
         res.status(201).json(category);

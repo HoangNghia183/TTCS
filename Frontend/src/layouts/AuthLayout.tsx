@@ -1,7 +1,12 @@
 import { Link } from "react-router";
 import { Outlet } from "react-router";
-
+import { useAuthStore } from "@/stores/useAuthStore";
+import { Navigate } from "react-router";
 const AuthLayout = () => {
+    const {accessToken} = useAuthStore();
+    if(accessToken){
+        return <Navigate to={"/"}/>
+    }
     return (
         // Sửa layout auth
         <div className="min-h-screen bg-gradient-to-br from-red-50 via-background to-teal-50 dark:from-red-950/20 dark:via-background dark:to-teal-950/20 flex flex-col items-center justify-center px-4 py-8 md:py-10">

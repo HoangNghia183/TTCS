@@ -19,7 +19,7 @@ const WishlistPage = () => {
     const handleRemove = async (productId: string) => {
         try {
             await collectionService.removeFromWishlist(productId);
-            setProducts((p) => p.filter((x) => x.id !== productId));
+            setProducts((p) => p.filter((x) => x._id !== productId));
             toast.success("Đã xóa khỏi danh sách yêu thích.");
         } catch {
             toast.error("Không thể xóa. Vui lòng thử lại.");

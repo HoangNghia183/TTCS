@@ -4,7 +4,6 @@ import Loading from "@/components/common/Loading";
 
 const AdminRoute = () => {
     const { accessToken, user, loading } = useAuthStore();
-
     if (loading) return <Loading fullPage text="Đang xác thực..." />;
 
     if (!accessToken || !user) {

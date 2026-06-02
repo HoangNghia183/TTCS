@@ -8,8 +8,8 @@ import type { Category } from "@/types/category";
 
 interface Props {
     onClose: () => void;
-    onCreated: (p: Product) => void;
-    product:Product;
+    product: Product;
+    loadProducts:()=>void;
 }
 
 interface FormValues {
@@ -17,43 +17,49 @@ interface FormValues {
     price: string | number;
     stock: string | number;
     category: string;
+    newCategoryName?: string; // 1. Thêm trường này vào FormValues
+    newCategoryDescription?: string; // Mô tả cho thể loại mới
     imgFile: File | null;
     bookFile: File | null;
     specifications: string;
     description: string;
 }
 
-const AddProductModal = ({ onClose, onCreated, product }: Props) => {
+const convert = (spec: Object) => {
+    if (spec) return Object?.entries(spec).map(([key, val]) => `${key} : ${val}`).join('\n');
+    else return "";
+};
+
+const AddProductModal = ({ onClose, product,loadProducts }: Props) => {
     const [categoriesList, setCategoriesList] = useState<Category[]>([]);
     const [submitting, setSubmitting] = useState(false);
-    console.log(product);
-    // Khởi tạo useForm từ react-hook-form
+
     const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
         defaultValues: {
             name: product?.name,
             price: product.price ?? "",
             stock: product.stock ?? "",
-            category: product.category._id ?? "",
+            category: product?.category?._id ?? "",
+            newCategoryName: "",
+            newCategoryDescription: "",
             imgFile: null,
             bookFile: null,
-            specifications:  "",
+            specifications: convert(product?.specifications),
             description: product.description ?? ""
         }
     });
 
-    // Watch values để gán vào thuộc tính value của các input (giúp giữ nguyên cơ chế hoạt động cũ của UI)
     const formValues = watch();
 
     useEffect(() => {
-        loadData();
+        loadCategoryList();
     }, []);
 
-    const loadData = async () => {
+    const loadCategoryList = async () => {
         const catsList = await categoryService.getAll();
         setCategoriesList(catsList);
     };
 
-    // Hàm xử lý thay đổi file riêng biệt cho react-hook-form
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, files } = e.target;
         if (files && files.length > 0) {
@@ -67,12 +73,20 @@ const AddProductModal = ({ onClose, onCreated, product }: Props) => {
             return;
         }
 
-        const formData = new FormData();
+        // 2. Kiểm tra nếu chọn thể loại mới mà để trống ô nhập tên
+        if (data.category === "" && !data.newCategoryName?.trim()) {
+            toast.error("Vui lòng nhập tên thể loại mới");
+            return;
+        }
 
-        // Append tất cả dữ liệu vào FormData giống như logic ban đầu
+        const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
+            // Loại bỏ trường newCategoryName/newCategoryDescription nếu không phải đang chọn tạo thể loại mới
+            if ((key === "newCategoryName" || key === "newCategoryDescription") && data.category !== "") {
+                return;
+            }
+
             if (value !== null && value !== undefined) {
-                // Chuyển stock thành số nếu tồn tại như hàm handleChange cũ
                 if (key === "stock" && value !== "") {
                     formData.append(key, String(+value));
                 } else {
@@ -83,27 +97,28 @@ const AddProductModal = ({ onClose, onCreated, product }: Props) => {
 
         try {
             setSubmitting(true);
-            const created = await productService.create(formData);
-            toast.success("Tạo sản phẩm thành công");
-            onCreated(created);
+            await productService.create(formData);
+            toast.success(product ? "Cập nhật sản phẩm thành công" : "Tạo sản phẩm thành công");
+           
+            loadProducts();
             onClose();
         } catch (err) {
-            toast.error("Tạo sản phẩm thất bại. Vui lòng thử lại");
+            toast.error("Thao tác thất bại. Vui lòng thử lại");
             console.error(err);
-        }  {
+        } finally {
             setSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-xl space-y-4"
+                className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto"
             >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center sticky top-0 bg-white pb-2 z-10">
                     <h2 className="text-xl font-bold text-gray-800">
-                        Thêm sản phẩm
+                        {product._id ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
                     </h2>
                     <button
                         type="button"
@@ -113,18 +128,20 @@ const AddProductModal = ({ onClose, onCreated, product }: Props) => {
                         ✕
                     </button>
                 </div>
+                
                 <input
                     {...register("name")}
                     placeholder="Tên sản phẩm"
                     value={formValues.name}
-                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                
                 <input
                     {...register("price")}
                     type="number"
                     placeholder="Giá"
                     value={formValues.price}
-                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
 
                 <input
@@ -132,65 +149,92 @@ const AddProductModal = ({ onClose, onCreated, product }: Props) => {
                     type="number"
                     placeholder="Số lượng"
                     value={formValues.stock}
-                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                
                 <select 
                     {...register("category")}
                     value={formValues.category}
-                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                    <option value="">chọn thể loại</option>
-                    {categoriesList.map(val => {
-                        return <option key={val._id} value={val._id}>{val.name}</option>
-                    })}
+                    <option value="" className="text-indigo-600 font-semibold">
+                        + Thêm thể loại mới
+                    </option>
+                    {categoriesList.map(val => (
+                        <option key={val._id} value={val._id}>{val.name}</option>
+                    ))}
+
                 </select>
+                {formValues.category === "" && (
+                    <input
+                        {...register("newCategoryName")}
+                        type="text"
+                        placeholder="Nhập tên thể loại mới..."
+                        value={formValues.newCategoryName}
+                        className="w-full p-2 rounded-lg border border-indigo-300 bg-indigo-50/30 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                    />
+                )}
+                {formValues.category === "" && (
+                    <input
+                        type="text"
+                        {...register("newCategoryDescription")}
+                        placeholder="Mô tả cho thể loại (tuỳ chọn)"
+                        value={formValues.newCategoryDescription}
+                        className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                )}
+                
                 <textarea 
                     {...register("specifications")}
-                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formValues.specifications}
                     placeholder={`nhập thông tin cụ thể khác dạng:\nname1 : value1\nname2 : value2`}
-                >
-                </textarea>
+                    rows={3}
+                />
+                
                 <input 
                     type="text" 
                     {...register("description")}
                     value={formValues.description}
                     placeholder="miêu tả"
-                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                
                 <div>
                     <label className="block mb-1 text-sm font-medium text-gray-700">
                         Ảnh sản phẩm
                     </label>
-
                     <input
                         name="imgFile"
                         type="file"
                         onChange={handleFileChange}
-                        className="w-full p-2 rounded-lg border border-gray-300 text-gray-700
-            file:mr-3 file:px-3 file:py-1
-            file:border-0 file:rounded
-            file:bg-indigo-100 file:text-indigo-700"
+                        className="w-full p-2 rounded-lg border border-gray-300 text-gray-700 file:mr-3 file:px-3 file:py-1 file:border-0 file:rounded file:bg-indigo-100 file:text-indigo-700"
                     />
+                    {product && (
+                        <p className="mt-1 p-1.5 bg-gray-50 rounded text-xs text-gray-500 break-all border border-gray-100">
+                            {product?.images}
+                        </p>
+                    )}
                 </div>
 
                 <div>
                     <label className="block mb-1 text-sm font-medium text-gray-700">
                         File sách
                     </label>
-
                     <input
                         name="bookFile"
                         type="file"
                         onChange={handleFileChange}
-                        className="w-full p-2 rounded-lg border border-gray-300 text-gray-700
-            file:mr-3 file:px-3 file:py-1
-            file:border-0 file:rounded
-            file:bg-indigo-100 file:text-indigo-700"
+                        className="w-full p-2 rounded-lg border border-gray-300 text-gray-700 file:mr-3 file:px-3 file:py-1 file:border-0 file:rounded file:bg-indigo-100 file:text-indigo-700"
                     />
+                    {product && (
+                        <p className="mt-1 p-1.5 bg-gray-50 rounded text-xs text-gray-500 break-all border border-gray-100">
+                            {product?.dLoadLink}
+                        </p>
+                    )}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className="flex justify-end gap-3 pt-2 sticky bottom-0 bg-white">
                     <button
                         type="button"
                         onClick={onClose}
@@ -199,13 +243,12 @@ const AddProductModal = ({ onClose, onCreated, product }: Props) => {
                     >
                         Hủy
                     </button>
-
                     <button
                         type="submit"
                         disabled={submitting}
                         className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
-                        {submitting ? "Đang tạo..." : "Tạo sản phẩm"}
+                        {submitting ? "Đang xử lý..." : product._id ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}
                     </button>
                 </div>
             </form>

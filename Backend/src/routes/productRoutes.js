@@ -1,12 +1,13 @@
 import express from 'express';
-import { 
-    getProducts, 
-    getProductById, 
-    createProduct, 
+import {
+    getProducts,
+    getProductById,
+    createProduct,
     // updateProduct, // (Nếu bạn đã viết trong controller)
     deleteProduct, // (Nếu bạn đã viết trong controller)
-    createProductReview, 
-    getOwnedBook
+    createProductReview,
+    getOwnedBook,
+    updateProduct
 } from '../controllers/productController.js';
 import uploadMemory from '../middlewares/memoryUpload.js'
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
@@ -15,7 +16,7 @@ import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.route('/owned-book').get(protectedRoute,getOwnedBook)
+router.route('/owned-book').get(protectedRoute, getOwnedBook)
 
 // Public
 router.route('/').get(getProducts);
@@ -35,8 +36,15 @@ router.route('/').post(
     ]),
     createProduct
 );
-
-router.route('/:id').delete(protectedRoute,adminRoute,deleteProduct);
+router.route('/').put(
+    protectedRoute, 
+    adminRoute, 
+    uploadMemory.fields([
+        { name: 'imgFile', maxCount: 1 },
+        { name: 'bookFile', maxCount: 1 }
+    ]),
+    updateProduct);
+router.route('/:id').delete(protectedRoute, adminRoute, deleteProduct);
 
 // router.post('/pdf', upload.single('pdfFile'), async (req, res) => {
 //   try {

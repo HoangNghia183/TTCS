@@ -9,36 +9,36 @@ import AuthLayout from "./layouts/AuthLayout";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 function App() {
-  const { refresh, loading } = useAuthStore();
+	const { refresh } = useAuthStore();
 
-  useEffect(() => {
-    // Restore auth state on app mount from refresh token in cookie
-    refresh().catch(() => {
-      // Silently fail if no valid refresh token
-      console.log("No valid session to restore");
-    });
-  }, [refresh]);
+	useEffect(() => {
+		// Restore auth state on app mount from refresh token in cookie
+		refresh().catch(() => {
+			// Silently fail if no valid refresh token
+			console.log("No valid session to restore");
+		});
+	}, [refresh]);
 
-  return (
-    <>
-      <Toaster position="top-left" richColors expand />
-      <BrowserRouter>
-        <Routes>
-          {/* Auth routes use AuthLayout */}
-          <Route element={<AuthLayout />}>
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-          </Route>
+	return (
+		<>
+			<Toaster position="top-left" richColors expand />
+			<BrowserRouter>
+				<Routes>
+					{/* Auth routes use AuthLayout */}
+					<Route element={<AuthLayout />}>
+						<Route path="/signin" element={<SignInPage />} />
+						<Route path="/signup" element={<SignUpPage />} />
+					</Route>
 
-          {/* All other routes handled by AppRoutes */}
-          <Route path="/*" element={<AppRoutes />} />
-        </Routes>
+					{/* All other routes handled by AppRoutes */}
+					<Route path="/*" element={<AppRoutes />} />
+				</Routes>
 
-        {/* Floating AI chat bubble */}
-        <ChatWidget />
-      </BrowserRouter>
-    </>
-  );
+				{/* Floating AI chat bubble */}
+				<ChatWidget />
+			</BrowserRouter>
+		</>
+	);
 }
 
 export default App;

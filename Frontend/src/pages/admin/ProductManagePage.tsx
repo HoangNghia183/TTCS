@@ -11,6 +11,7 @@ const ProductManagePage = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [showModal,setShowModal] = useState<string>("")
     const [productSelect,setProductSelect] = useState<Product>({} as Product)
+
     const loadProducts = useCallback(async () => {
         setLoading(true);
         try {
@@ -76,22 +77,16 @@ const ProductManagePage = () => {
             </div>
             {showModal=="add" && (
                 <AddProductModal
+                    loadProducts={loadProducts}
                     product={{} as Product}
                     onClose={() => setShowModal("")}
-                    onCreated={(product) => {
-                        setProducts((prev) => [product, ...prev]);
-                        setShowModal("");
-                    }}
                 />
             )}
             {showModal=="update" && (
                 <AddProductModal
+                    loadProducts={loadProducts}
                     product={productSelect}
                     onClose={()=>setShowModal("")}
-                    onCreated={(newProduct)=>{
-                        setProducts(books=>books.map(book=>book._id ? book : newProduct))
-                        setShowModal("");
-                    }}
                 />
             )}
             {loading ? (

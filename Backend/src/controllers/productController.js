@@ -3,8 +3,10 @@ import Review from '../models/Review.js'; // Nhớ import Review Model
 import APIFeatures from '../utils/apiFeatures.js';
 import OwnedBook from '../models/OwnedBook.js';
 import { cloudinary } from '../config/cloudinary.js';
+import Category from '../models/Category.js'
 // @desc    Lấy tất cả sản phẩm (Có lọc nâng cao, sort, phân trang)
 // @route   GET /api/products
+
 export const getProducts = async (req, res) => {
     try {
         // Sử dụng APIFeatures để xử lý query params
@@ -110,18 +112,19 @@ export const createProductReview = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
     try {
-        console.log('Body:', req.body);
-        console.log('Files:', req.files ? Object.keys(req.files) : 'none');
+        // console.log('Body:', req.body);
+        // console.log('Files:', req.files ? Object.keys(req.files) : 'none');
 
-        let { name, price, stock, description, category,specifications  } = req.body;
+        let { name, price, stock, description, category, specifications, newCategoryName = "", newCategoryDescription = "" } = req.body;
+        //string => object
         const bodyString = specifications;
-
         const result = bodyString.split(/\r?\n/).reduce((acc, line) => {
-          const [key, ...val] = line.split(':');
-          if (key && val.length) acc[key.trim()] = val.join(':').trim();
-          return acc;
+            const [key, ...val] = line.split(':');
+            if (key && val.length) acc[key.trim()] = val.join(':').trim();
+            return acc;
         }, {});
-        specifications=result;
+        specifications = result;
+
         if (!name || !price) {
             return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
         }
@@ -137,59 +140,67 @@ export const createProduct = async (req, res) => {
             name,
             slug,
             price: Number(price),
-            originPrice:price,
+            originPrice: price,
             stock: stock ? Number(stock) : 0,
             description,
             category,
             user: req.user._id,
             specifications
         };
+        if (category == "" && newCategoryName) {
+            // generate slug from new category name
+            const catSlug = newCategoryName
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Đã sửa: '' đổi thành '\u0300' để xóa chính xác các dấu tiếng Việt
+                .replace(/đ/g, 'd')             // Tối ưu: Vì đã .toLowerCase() ở trên nên chỉ cần tìm chữ 'đ' thường là đủ
+                .replace(/[^a-z0-9 ]/g, '')     // Xóa hết ký tự đặc biệt
+                .trim()                         // Cắt khoảng trắng 2 đầu
+                .replace(/\s+/g, '-');          // Đổi khoảng trắng ở giữa thành dấu gạch ngang
+            // try find existing by name or slug
+            let existingCat = await Category.findOne({ name: newCategoryName });
+            if (!existingCat) {
+                existingCat = await Category.create({ name: newCategoryName, slug: catSlug, description: newCategoryDescription });
+            }
+
+            productData.category = existingCat._id;
+        }
 
         const files = req.files || {};
 
-        // Upload image file to Cloudinary
         if (files.imgFile && Array.isArray(files.imgFile) && files.imgFile[0]) {
             try {
                 const file = files.imgFile[0];
                 const base64 = file.buffer.toString('base64');
                 const dataUri = `data:${file.mimetype};base64,${base64}`;
-                console.log('📸 Uploading image to Cloudinary...');
                 const result = await cloudinary.uploader.upload(dataUri, {
                     folder: 'imgBook',
-                    resource_type:'image'
+                    resource_type: 'image'
                 });
                 productData.images = [result.secure_url || result.url];
-                console.log('✅ Image uploaded:', productData.images[0]);
             } catch (imgErr) {
-                console.error('❌ Image upload error:', imgErr.message);
                 throw new Error(`Image upload failed: ${imgErr.message}`);
             }
         }
 
-        // Upload book file to Cloudinary
         if (files.bookFile && Array.isArray(files.bookFile) && files.bookFile[0]) {
             try {
                 const file = files.bookFile[0];
                 const base64 = file.buffer.toString('base64');
                 const dataUri = `data:${file.mimetype};base64,${base64}`;
-                console.log('📚 Uploading book file to Cloudinary...');
                 const result = await cloudinary.uploader.upload(dataUri, {
                     folder: 'bookDLoad',
                     resource_type: 'raw'
                 });
                 productData.dLoadLink = result.secure_url || result.url;
-                console.log('✅ Book file uploaded:', productData.dLoadLink);
             } catch (bookErr) {
-                console.error('❌ Book upload error:', bookErr.message);
                 throw new Error(`Book upload failed: ${bookErr.message}`);
             }
         }
 
-
         const product = new Product(productData);
-        console.log(product);
+
         const createdProduct = await product.save();
-        console.log('✅ Product created:', createdProduct._id);
         res.status(201).json(createdProduct);
     } catch (error) {
         console.error('❌ Create product error:', error.message);
