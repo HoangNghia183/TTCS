@@ -9,7 +9,7 @@ import type { Category } from "@/types/category";
 interface Props {
     onClose: () => void;
     product: Product;
-    loadProducts:()=>void;
+    loadProducts: () => void;
 }
 
 interface FormValues {
@@ -30,13 +30,13 @@ const convert = (spec: Object) => {
     else return "";
 };
 
-const AddProductModal = ({ onClose, product,loadProducts }: Props) => {
+const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props) => {
     const [categoriesList, setCategoriesList] = useState<Category[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
     const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
         defaultValues: {
-            name: product?.name,
+            name: product?.name ?? "",
             price: product.price ?? "",
             stock: product.stock ?? "",
             category: product?.category?._id ?? "",
@@ -94,19 +94,31 @@ const AddProductModal = ({ onClose, product,loadProducts }: Props) => {
                 }
             }
         });
-
-        try {
-            setSubmitting(true);
-            await productService.create(formData);
-            toast.success(product ? "Cập nhật sản phẩm thành công" : "Tạo sản phẩm thành công");
-           
-            loadProducts();
-            onClose();
-        } catch (err) {
-            toast.error("Thao tác thất bại. Vui lòng thử lại");
-            console.error(err);
-        } finally {
-            setSubmitting(false);
+        if (!product) {
+            try {
+                setSubmitting(true);
+                await productService.create(formData);
+                toast.success(product ? "Cập nhật sản phẩm thành công" : "Tạo sản phẩm thành công");
+                loadProducts();
+                onClose();
+            } catch (err) {
+                toast.error("Thao tác thất bại. Vui lòng thử lại");
+                console.error(err);
+            } finally {
+                setSubmitting(false);
+            }
+        }
+        else{
+            try {
+                setSubmitting(true);
+                await productService.update(product._id,formData);
+                loadProducts();
+                onClose();
+            } catch (error) {
+                console.log(error);
+            } finally{
+                setSubmitting(false);
+            }
         }
     };
 
@@ -128,14 +140,14 @@ const AddProductModal = ({ onClose, product,loadProducts }: Props) => {
                         ✕
                     </button>
                 </div>
-                
+
                 <input
                     {...register("name")}
                     placeholder="Tên sản phẩm"
                     value={formValues.name}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
-                
+
                 <input
                     {...register("price")}
                     type="number"
@@ -151,8 +163,8 @@ const AddProductModal = ({ onClose, product,loadProducts }: Props) => {
                     value={formValues.stock}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
-                
-                <select 
+
+                <select
                     {...register("category")}
                     value={formValues.category}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -183,23 +195,23 @@ const AddProductModal = ({ onClose, product,loadProducts }: Props) => {
                         className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                 )}
-                
-                <textarea 
+
+                <textarea
                     {...register("specifications")}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formValues.specifications}
                     placeholder={`nhập thông tin cụ thể khác dạng:\nname1 : value1\nname2 : value2`}
                     rows={3}
                 />
-                
-                <input 
-                    type="text" 
+
+                <input
+                    type="text"
                     {...register("description")}
                     value={formValues.description}
                     placeholder="miêu tả"
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
-                
+
                 <div>
                     <label className="block mb-1 text-sm font-medium text-gray-700">
                         Ảnh sản phẩm

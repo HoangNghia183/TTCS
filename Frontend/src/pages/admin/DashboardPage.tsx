@@ -1,27 +1,40 @@
 import StatCard from "@/components/features/admin/StatCard";
-import { formatCurrency } from "@/utils/format";
+import { formatCurrency,formatDateISO } from "@/utils/format";
+import { useEffect, useState } from "react";
+import { orderService } from "@/services/orderService"
+// import type { Order } from "@/types/order";
 
-const MOCK_ORDERS = [
-    { id: "ORD001", customer: "Nguyễn Văn A", total: 2500000, status: "delivered", date: "2026-02-25" },
-    { id: "ORD002", customer: "Trần Thị B", total: 890000, status: "shipping", date: "2026-02-25" },
-    { id: "ORD003", customer: "Lê Minh C", total: 15000000, status: "confirmed", date: "2026-02-24" },
-    { id: "ORD004", customer: "Phạm Thu D", total: 450000, status: "pending", date: "2026-02-24" },
-    { id: "ORD005", customer: "Vũ Hải E", total: 3200000, status: "cancelled", date: "2026-02-23" },
-];
 
 const STATUS_COLORS: Record<string, string> = {
     pending: "bg-amber-100 text-amber-700",
-    confirmed: "bg-blue-100 text-blue-700",
+    processing: "bg-blue-100 text-blue-700",
     shipping: "bg-indigo-100 text-indigo-700",
     delivered: "bg-emerald-100 text-emerald-700",
     cancelled: "bg-red-100 text-red-600",
 };
 const STATUS_LABELS: Record<string, string> = {
-    pending: "Chờ xác nhận", confirmed: "Đã xác nhận",
+    pending: "Chờ xác nhận", processing: "Đã xác nhận",
     shipping: "Đang giao", delivered: "Thành công", cancelled: "Đã hủy",
 };
 
 const DashboardPage = () => {
+    const [orderList, setOrderList] = useState<any[]>([]);
+    // const [orders,setOrders] = useState([]);
+    useEffect(() => {
+        loadOrder();
+    }, [])
+    const loadOrder = async () => {
+        const res = await orderService.getAllOrders();
+        await setOrderList(res.map(order=>{
+            return {
+                id:order._id.substring(16),
+                customer:order.user.username,
+                total:order.totalPrice,
+                status:order.status.toLocaleLowerCase(),
+                date:formatDateISO(order.createdAt)
+            }
+        }))
+    }
     return (
         <div className="flex flex-col gap-6">
             <h1 className="section-title">📊 Tổng Quan</h1>
@@ -47,7 +60,7 @@ const DashboardPage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {MOCK_ORDERS.map((o) => (
+                            {orderList.map((o) => (
                                 <tr key={o.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                                     <td className="py-3 pr-4 font-mono text-xs text-foreground font-semibold">{o.id}</td>
                                     <td className="py-3 pr-4 text-foreground">{o.customer}</td>

@@ -108,136 +108,214 @@ export const createProductReview = async (req, res) => {
     }
 };
 
-// @desc    Tạo sản phẩm (Admin) - Thêm Slug
-// @route   POST /api/products
+const generateSlug = (text) => {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Xóa dấu tiếng Việt
+        .replace(/[đĐ]/g, 'd')           // Chuyển đ, Đ thành d
+        .replace(/[^a-z0-9 ]/g, '')     // Xóa ký tự đặc biệt
+        .trim()
+        .replace(/\s+/g, '-');          // Đổi khoảng trắng thành gạch ngang
+};
+
+const parseSpecifications = (specString) => {
+    if (!specString || typeof specString !== 'string') return {};
+
+    return specString.split(/\r?\n/).reduce((acc, line) => {
+        const [key, ...val] = line.split(':');
+        if (key && val.length) {
+            acc[key.trim()] = val.join(':').trim();
+        }
+        return acc;
+    }, {});
+};
+
+const uploadProductImage = async (file) => {
+    if (!file || !file.buffer) return null;
+
+    const base64 = file.buffer.toString('base64');
+    const dataUri = `data:${file.mimetype};base64,${base64}`;
+
+    const result = await cloudinary.uploader.upload(dataUri, {
+        folder: 'imgBook',
+        resource_type: 'image'
+    });
+
+    return result.secure_url || result.url;
+};
+
+const uploadProductFile = async (file) => {
+    if (!file || !file.buffer) return null;
+
+    const base64 = file.buffer.toString('base64');
+    const dataUri = `data:${file.mimetype};base64,${base64}`;
+
+    const result = await cloudinary.uploader.upload(dataUri, {
+        folder: 'bookDLoad',
+        resource_type: 'raw'
+    });
+
+    return result.secure_url || result.url;
+};
+
 export const createProduct = async (req, res) => {
     try {
-        // console.log('Body:', req.body);
-        // console.log('Files:', req.files ? Object.keys(req.files) : 'none');
+        let {
+            name, price, stock, description, category, specifications,
+            newCategoryName = "", newCategoryDescription = ""
+        } = req.body;
 
-        let { name, price, stock, description, category, specifications, newCategoryName = "", newCategoryDescription = "" } = req.body;
-        //string => object
-        const bodyString = specifications;
-        const result = bodyString.split(/\r?\n/).reduce((acc, line) => {
-            const [key, ...val] = line.split(':');
-            if (key && val.length) acc[key.trim()] = val.join(':').trim();
-            return acc;
-        }, {});
-        specifications = result;
-
+        // 1. Validate dữ liệu đầu vào bắt buộc
         if (!name || !price) {
             return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
         }
 
-        const slug = name.toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[đĐ]/g, 'd')
-            .replace(/[^a-z0-9 ]/g, '')
-            .trim()
-            .replace(/\s+/g, '-');
+        // 2. Xử lý chuẩn hóa dữ liệu bằng helper
+        const parsedSpecs = parseSpecifications(specifications);
+        const productSlug = generateSlug(name);
 
         const productData = {
             name,
-            slug,
+            slug: productSlug,
             price: Number(price),
             originPrice: price,
             stock: stock ? Number(stock) : 0,
             description,
             category,
             user: req.user._id,
-            specifications
+            specifications: parsedSpecs
         };
-        if (category == "" && newCategoryName) {
-            // generate slug from new category name
-            const catSlug = newCategoryName
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '') // Đã sửa: '' đổi thành '\u0300' để xóa chính xác các dấu tiếng Việt
-                .replace(/đ/g, 'd')             // Tối ưu: Vì đã .toLowerCase() ở trên nên chỉ cần tìm chữ 'đ' thường là đủ
-                .replace(/[^a-z0-9 ]/g, '')     // Xóa hết ký tự đặc biệt
-                .trim()                         // Cắt khoảng trắng 2 đầu
-                .replace(/\s+/g, '-');          // Đổi khoảng trắng ở giữa thành dấu gạch ngang
-            // try find existing by name or slug
+
+        // 3. Xử lý tạo Danh mục mới nếu có
+        if (category === "" && newCategoryName) {
+            const catSlug = generateSlug(newCategoryName);
+
             let existingCat = await Category.findOne({ name: newCategoryName });
             if (!existingCat) {
-                existingCat = await Category.create({ name: newCategoryName, slug: catSlug, description: newCategoryDescription });
+                existingCat = await Category.create({
+                    name: newCategoryName,
+                    slug: catSlug,
+                    description: newCategoryDescription
+                });
             }
-
             productData.category = existingCat._id;
         }
 
+        // 4. Xử lý Upload Files sử dụng 2 hàm riêng biệt
         const files = req.files || {};
 
-        if (files.imgFile && Array.isArray(files.imgFile) && files.imgFile[0]) {
+        // Upload hình ảnh sản phẩm
+        if (files.imgFile?.[0]) {
             try {
-                const file = files.imgFile[0];
-                const base64 = file.buffer.toString('base64');
-                const dataUri = `data:${file.mimetype};base64,${base64}`;
-                const result = await cloudinary.uploader.upload(dataUri, {
-                    folder: 'imgBook',
-                    resource_type: 'image'
-                });
-                productData.images = [result.secure_url || result.url];
+                const imgUrl = await uploadProductImage(files.imgFile[0]);
+                if (imgUrl) productData.images = [imgUrl];
             } catch (imgErr) {
-                throw new Error(`Image upload failed: ${imgErr.message}`);
+                return res.status(400).json({ message: `Image upload failed: ${imgErr.message}` });
             }
         }
 
-        if (files.bookFile && Array.isArray(files.bookFile) && files.bookFile[0]) {
+        // Upload file sách (Tài liệu download)
+        if (files.bookFile?.[0]) {
             try {
-                const file = files.bookFile[0];
-                const base64 = file.buffer.toString('base64');
-                const dataUri = `data:${file.mimetype};base64,${base64}`;
-                const result = await cloudinary.uploader.upload(dataUri, {
-                    folder: 'bookDLoad',
-                    resource_type: 'raw'
-                });
-                productData.dLoadLink = result.secure_url || result.url;
+                const bookUrl = await uploadProductFile(files.bookFile[0]);
+                if (bookUrl) productData.dLoadLink = bookUrl;
             } catch (bookErr) {
-                throw new Error(`Book upload failed: ${bookErr.message}`);
+                return res.status(400).json({ message: `Book file upload failed: ${bookErr.message}` });
             }
         }
 
+        // 5. Lưu vào Database và phản hồi client
         const product = new Product(productData);
-
         const createdProduct = await product.save();
-        res.status(201).json(createdProduct);
+
+        return res.status(201).json(createdProduct);
+
     } catch (error) {
         console.error('❌ Create product error:', error.message);
         console.error('Stack:', error.stack);
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
-
 // @desc    Cập nhật sản phẩm (Admin) - (MỚI)
 // @route   PUT /api/products/:id
 export const updateProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock, images, specifications } = req.body;
-        const product = await Product.findById(req.params.id);
+        const {
+            name,
+            price,
+            stock,
+            description,
+            category,
+            specifications,
+            newCategoryName = "",
+            newCategoryDescription = "",
+            imgFile,
+            bookFile
+        } = req.body;
 
-        if (product) {
-            product.name = name || product.name;
-            product.price = price || product.price;
-            product.description = description || product.description;
-            product.category = category || product.category;
-            product.stock = stock || product.stock;
-            product.images = images || product.images;
-            product.specifications = specifications || product.specifications;
-
-            // Nếu đổi tên thì update lại slug
-            if (name) {
-                product.slug = name.toLowerCase()
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                    .replace(/ /g, '-');
-            }
-
-            const updatedProduct = await product.save();
-            res.json(updatedProduct);
-        } else {
-            res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+        const oldProduct = await Product.findById(req.params.id);
+        if (!oldProduct) {
+            return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
         }
+
+        const parsedSpecs = parseSpecifications(specifications);
+        const productSlug = generateSlug(name || oldProduct.name);
+
+        const productData = {
+            name: name ?? oldProduct.name,
+            slug: productSlug,
+            price: Number(price),
+            originPrice: price,
+            stock: stock ? Number(stock) : 0,
+            description,
+            category,
+            user: req.user._id,
+            specifications: parsedSpecs
+        };
+
+        if (category === "" && newCategoryName) {
+            const catSlug = generateSlug(newCategoryName);
+
+            let existingCat = await Category.findOne({ name: newCategoryName });
+            if (!existingCat) {
+                existingCat = await Category.create({
+                    name: newCategoryName,
+                    slug: catSlug,
+                    description: newCategoryDescription
+                });
+            }
+            productData.category = existingCat._id;
+        }
+
+        if (imgFile) {
+            productData.images = Array.isArray(imgFile) ? imgFile : [imgFile];
+        } else if (req.files?.imgFile?.[0]) {
+            const imgUrl = await uploadProductImage(req.files.imgFile[0]);
+            if (imgUrl) productData.images = [imgUrl];
+        } else {
+            productData.images = oldProduct.images;
+        }
+
+        if (bookFile) {
+            productData.dLoadLink = bookFile;
+        } else if (req.files?.bookFile?.[0]) {
+            const bookUrl = await uploadProductFile(req.files.bookFile[0]);
+            if (bookUrl) productData.dLoadLink = bookUrl;
+        } else {
+            productData.dLoadLink = oldProduct.dLoadLink;
+        }
+
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, productData, {
+            new: true,
+            runValidators: true
+        });
+        res.json(updatedProduct);
+
     } catch (error) {
+        console.error('❌ Update product error:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({ message: error.message });
     }
 };

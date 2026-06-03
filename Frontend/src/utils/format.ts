@@ -9,6 +9,16 @@ export const formatDate = (dateStr: string): string => {
         year: "numeric",
     });
 };
+export function formatDateISO(isoString:string) {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+        return "Ngày không hợp lệ";
+    }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Tháng trong JS tính từ 0-11
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
 
 export const formatDateTime = (dateStr: string): string => {
     const date = new Date(dateStr);

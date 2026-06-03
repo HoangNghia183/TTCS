@@ -1,3 +1,5 @@
+import type { User } from "./user";
+
 export type OrderStatus = "Pending" | "Processing" | "Shipping" | "Delivered" | "Cancelled";
 export type PaymentMethod = "vnpay" | "cod";
 export type PaymentStatus = "unpaid" | "paid" | "refunded";
@@ -27,7 +29,7 @@ export interface PaymentResult {
 
 export interface Order {
     _id: string;
-    user: string; // ObjectId reference
+    user: User; // ObjectId reference
     orderItems: OrderItem[];
     shippingAddress: ShippingAddress;
     paymentMethod: PaymentMethod;

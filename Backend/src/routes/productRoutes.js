@@ -36,9 +36,9 @@ router.route('/').post(
     ]),
     createProduct
 );
-router.route('/').put(
-    protectedRoute, 
-    adminRoute, 
+router.route('/:id').put(
+    protectedRoute,
+    adminRoute,
     uploadMemory.fields([
         { name: 'imgFile', maxCount: 1 },
         { name: 'bookFile', maxCount: 1 }

@@ -1,37 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DataTable, { type Column } from "@/components/features/admin/DataTable";
-import { formatRelativeTime } from "@/utils/format";
+import { formatDateISO } from "@/utils/format";
 import { toast } from "sonner";
+import { productService } from "@/services/productService";
 
 interface AdminReview {
     _id: string;
     productName: string;
-    userName: string;
+    username: string;
     rating: number;
     comment: string;
     createdAt: string;
 }
 
-const MOCK_REVIEWS: AdminReview[] = [
-    { _id: "r1", productName: "Trăm năm cô đơn", userName: "Nguyen Van A", rating: 5, comment: "Sách hay!", createdAt: new Date().toISOString() },
-    { _id: "r2", productName: "Đắc Nhân Tâm", userName: "Tran Thi B", rating: 2, comment: "Spam spam mua hang di", createdAt: new Date(Date.now() - 86400000).toISOString() },
-    { _id: "r3", productName: "Dế Mèn Phiêu Lưu Ký", userName: "Le Minh C", rating: 4, comment: "Sách in đẹp, giao hàng nhanh.", createdAt: new Date(Date.now() - 172800000).toISOString() },
-];
-
 const ReviewManagePage = () => {
-    const [reviews, setReviews] = useState<AdminReview[]>(MOCK_REVIEWS);
+    const [reviews, setReviews] = useState<any[]>([]);
+    useEffect(()=>{
+        loadData();
+    },[])
+    const loadData = async ()=>{
+        const res = await productService.getReviewList();
+        await setReviews(res.map((review:any) => {
 
-    const handleDelete = (id: string) => {
+            return {
+                _id:review._id,
+                productName:review.product.name,
+                username:review.user.username,
+                rating:review.rating,
+                comment:review.comment,
+                createdAt:formatDateISO(review.createdAt)
+            }
+        }));
+    }
+    const handleDelete = async (id: string) => {
+        await productService.deleteReview(id);
+        loadData();
         setReviews((prev) => prev.filter((r) => r._id !== id));
         toast.success("Đã xóa đánh giá.");
     };
 
     const columns: Column<AdminReview>[] = [
         { key: "product", header: "Sản phẩm", render: (r) => <span className="font-semibold text-sm text-foreground">{r.productName}</span> },
-        { key: "user", header: "Người dùng", render: (r) => <span className="text-muted-foreground text-sm">{r.userName}</span> },
+        { key: "user", header: "Người dùng", render: (r) => <span className="text-muted-foreground text-sm">{r.username}</span> },
         { key: "rating", header: "⭐", render: (r) => <span className="font-bold text-amber-500">{r.rating}/5</span> },
         { key: "comment", header: "Bình luận", render: (r) => <span className="text-foreground text-sm line-clamp-2 max-w-xs">{r.comment}</span> },
-        { key: "time", header: "Thời gian", render: (r) => <span className="text-muted-foreground text-xs">{formatRelativeTime(r.createdAt)}</span> },
+        { key: "time", header: "Thời gian", render: (r) => <span className="text-muted-foreground text-xs">{r.createdAt}</span> },
     ];
 
     return (

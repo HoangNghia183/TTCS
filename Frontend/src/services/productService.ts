@@ -97,4 +97,12 @@ export const productService = {
     submitReview: async (productId: string, payload: ReviewPayload): Promise<void> => {
         await api.post(`/products/${productId}/reviews`, payload);
     },
+    getReviewList: async () => {
+        const res = await api.get(`/reviews`);
+        // console.log(res.data);
+        return res.data;
+    },
+    deleteReview: async (id:string):Promise<void>=>{
+        await api.delete(`/reviews/${id}`);
+    }
 };

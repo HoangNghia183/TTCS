@@ -7,10 +7,9 @@ export const getAllReviews = async (req, res) => {
     try {
         // Populate để biết ai viết và viết cho sản phẩm nào
         const reviews = await Review.find({})
-            .populate('user', 'fullName email')
+            .populate('user', 'username')
             .populate('product', 'name')
-            .sort({ createdAt: -1 }); // Mới nhất lên đầu
-            
+            .sort({ createdAt: -1 });
         res.json(reviews);
     } catch (error) {
         res.status(500).json({ message: error.message });
