@@ -1,5 +1,6 @@
 import User from '../models/User.js';
-
+import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 // @desc    Lấy thông tin người dùng hiện tại (Profile)
 // @route   GET /api/users/profile
 // @access  Private (User/Admin)
@@ -7,7 +8,6 @@ export const getUserProfile = async (req, res) => {
     try {
         // req.user đã có từ middleware `protectedRoute`
         const user = await User.findById(req.user._id).select('-hashedPassword');
-
         if (user) {
             res.status(200).json({
                 _id: user._id,
@@ -29,7 +29,30 @@ export const getUserProfile = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server khi lấy thông tin cá nhân' });
     }
 };
+// export const updateUserProfile = async (req,res) => {
+    
+// }
 
+export const changePassword = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.user._id });
+        const { oldPassword, newPassword } = req.body;
+        const hashPassword = await bcrypt.hash(newPassword, 10);
+        const check = await bcrypt.compare(oldPassword, user.hashedPassword);
+        if (check) {
+            console.log(hashPassword);
+            await User.findByIdAndUpdate(user._id, {
+                hashedPassword: hashPassword
+            })
+            res.json({ message: "đã đổi mật khẩu", check: true });
+        }
+        else {
+            res.json({ message: "sai mật khẩu ban đầu", check: false });
+        }
+    } catch (er) {
+        console.log("error : ", er);
+    }
+}
 // @desc    Cập nhật thông tin cá nhân
 // @route   PUT /api/users/profile
 // @access  Private
@@ -38,28 +61,10 @@ export const updateUserProfile = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (user) {
-            // Cập nhật các trường nếu có gửi lên, nếu không giữ nguyên cũ
-            user.fullName = req.body.fullName || user.fullName;
-            user.phone = req.body.phone || user.phone;
-            user.address = req.body.address || user.address;
-            user.avatar = req.body.avatar || user.avatar;
-
-            // Nếu user gửi password mới thì cập nhật (Model sẽ tự hash lại)
-            if (req.body.password) {
-                user.password = req.body.password;
-            }
-
-            const updatedUser = await user.save();
-
+            Object.assign(user,req.body);
+            user.save();
             res.json({
-                _id: updatedUser._id,
-                fullName: updatedUser.fullName,
-                email: updatedUser.email,
-                role: updatedUser.role,
-                phone: updatedUser.phone,
-                address: updatedUser.address,
-                avatar: updatedUser.avatar,
-                token: req.headers.authorization.split(' ')[1] // Trả lại token cũ
+                ...user,hashedPassword:""
             });
         } else {
             res.status(404).json({ message: 'Không tìm thấy người dùng' });
@@ -151,8 +156,8 @@ export const unblockUser = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server khi mở khóa user' });
     }
 };
-export const setRole = async (req,res) => {
-    
+export const setRole = async (req, res) => {
+
 }
 
 // @desc    Test route

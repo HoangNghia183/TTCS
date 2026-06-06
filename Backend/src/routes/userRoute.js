@@ -6,7 +6,8 @@ import {
     deleteUser,
     blockUser,
     unblockUser,
-    test
+    test,
+    changePassword
 } from '../controllers/userController.js';
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
 
@@ -30,6 +31,7 @@ router.route('/:id/block')
 router.route('/:id/unblock')
     .put(protectedRoute, adminRoute, unblockUser);
     
+router.route('/password').put(protectedRoute,changePassword);
 router.get('/test', test);
 
 export default router;

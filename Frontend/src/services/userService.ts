@@ -14,7 +14,7 @@ export const userService = {
     },
 
     updateProfile: async (payload: UpdateProfilePayload): Promise<User> => {
-        const res = await api.put<ApiResponse<User>>("/users/me", payload);
+        const res = await api.put<ApiResponse<User>>("/users/profile", payload);
         return res.data.data;
     },
 
@@ -27,8 +27,9 @@ export const userService = {
         return res.data.data;
     },
 
-    changePassword: async (oldPassword: string, newPassword: string): Promise<void> => {
-        await api.put("/users/me/password", { oldPassword, newPassword });
+    changePassword: async (oldPassword: string, newPassword: string): Promise<any> => {
+        const res = await api.put("/users/password", { oldPassword, newPassword });
+        return res.data;
     },
 
     getAllUsers: async (page = 1, limit = 20): Promise<User[]> => {

@@ -36,8 +36,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         maxlength: 160,
     },
-    
-    // Vẫn cần thêm các trường này cho E-commerce
     role: {
         type: String,
         enum: ['customer', 'admin', 'staff'],

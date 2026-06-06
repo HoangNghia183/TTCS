@@ -3,8 +3,6 @@ import {toast} from "sonner";
 import { authService } from "@/services/authService";
 import type { AuthState } from "@/types/store";
 
-//file này dùng để quản lý trạng thái xác thực người dùng trong ứng dụng frontend bằng thư viện Zustand.
-
 export const useAuthStore = create<AuthState>((set, get) => ({
     accessToken: null,
     user: null, 
@@ -74,8 +72,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             
             console.log("Raw response from service:", res);
 
-            // Giả sử res trả về object { user: {...} }, ta chỉ lấy phần ruột
-            // Nếu res chính là user info thì giữ nguyên, nếu bọc trong 'user' thì lấy res.user
             const userData = res.user ? res.user : res; 
             
             set({ user: userData }); 
