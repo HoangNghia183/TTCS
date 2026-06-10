@@ -66,8 +66,8 @@ router.get('/revenue',
         let { beginDay, endDay } = req.query;
         const now = new Date();
         // console.log(now.getDay());
-        // console.log("begin ", beginDay);
-        // console.log("end ", endDay);
+        console.log("begin ", beginDay);
+        console.log("end ", endDay);
         if (!beginDay) {
             beginDay = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         }

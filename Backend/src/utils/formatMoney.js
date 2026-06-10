@@ -15,6 +15,6 @@ export const formatDate = (date) => {
 };
 export const formatDate2 = (dateString,format)=>{
     if(!dateString) return '';
-    const res = moment(dateString,"DD-MM-YYYY").toDate();
+    const res = moment(dateString,"YYYY-MM-DD").toDate();
     return res;
 }
