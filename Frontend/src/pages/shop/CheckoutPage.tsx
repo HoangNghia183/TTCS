@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useCartStore } from "@/stores/useCartStore";
 import { orderService } from "@/services/orderService";
@@ -7,8 +7,20 @@ import { paymentService } from "@/services/paymentService";
 import { formatCurrency } from "@/utils/format";
 import { toast } from "sonner";
 import type { ShippingAddress, PaymentMethod } from "@/types/order";
+import { useAuthStore } from "@/stores/useAuthStore";
+
+const splitAddress = (a:string,op:number):any=>{
+    if(!a) return ""
+    const ar = a.split('-');
+    if(op==1) return ar.at(-1);
+    else if(op==2) return ar.at(-2);
+    else if(op==3) return ar.slice(0,-2).join(" ");
+    return "";
+}
 
 const CheckoutPage = () => {
+    const {user} = useAuthStore();
+    // console.log(user);
     const navigate = useNavigate();
     const { items, totalPrice, clearCart } = useCartStore();
     const [loading, setLoading] = useState(false);
@@ -17,13 +29,19 @@ const CheckoutPage = () => {
     const [discount, setDiscount] = useState(0);
     const [checkingCoupon, setCheckingCoupon] = useState(false);
     const [address, setAddress] = useState<ShippingAddress>({
-        fullName: "", phone: "", address: "", city: "", district: "",
+        fullName: user?.displayName ?? "", 
+        phone: user?.phone ?? "", 
+        address: splitAddress(user?.address ?? "",3), 
+        city: splitAddress(user?.address ?? "",1), 
+        district: splitAddress(user?.address ?? "",2),
     });
-
+    useEffect(()=>{
+        
+    },[user])
     const subtotal = totalPrice();
     const shippingFee = subtotal >= 500000 ? 0 : 30000;
     const total = subtotal + shippingFee - discount;
-
+    
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
         setCheckingCoupon(true);

@@ -17,7 +17,7 @@ import couponRoutes from './routes/couponRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import warrantyRoutes from './routes/warrantyRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
-
+import adminRoutes from './routes/admin.js';
 
 // Cấu hình
 dotenv.config();
@@ -53,6 +53,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/admin',adminRoutes);
 
 
 // Features & Content

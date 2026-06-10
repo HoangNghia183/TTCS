@@ -77,7 +77,7 @@ const ProfilePage = () => {
                             </div>
                             <div>
                                 <label className="text-xs font-semibold text-muted-foreground mb-1 block">address</label>
-                                <input className={inputCls} {...register("address")} placeholder="địa chỉ mặc định" />
+                                <input className={inputCls} {...register("address")} placeholder="xx - yy - huyện - tỉnh" />
                             </div>
                             
                         </div>

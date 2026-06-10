@@ -2,6 +2,9 @@ import StatCard from "@/components/features/admin/StatCard";
 import { formatCurrency,formatDateISO } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { orderService } from "@/services/orderService"
+import { userService } from "@/services/userService";
+import { productService } from "@/services/productService";
+import api from "@/lib/axios";
 // import type { Order } from "@/types/order";
 
 
@@ -20,8 +23,14 @@ const STATUS_LABELS: Record<string, string> = {
 const DashboardPage = () => {
     const [orderList, setOrderList] = useState<any[]>([]);
     // const [orders,setOrders] = useState([]);
+    const [dashboard, setDashboard] = useState<any>({
+        userLen:0,
+        bookLen:0,
+        orderLen:0,
+    });
     useEffect(() => {
         loadOrder();
+        loadData();
     }, [])
     const loadOrder = async () => {
         const res = await orderService.getAllOrders();
@@ -35,6 +44,11 @@ const DashboardPage = () => {
             }
         }))
     }
+    const loadData = async () => {
+        const res = await api.get(`/admin/dashboard`);
+        console.log(res.data);
+        setDashboard(res.data);
+    }   
     return (
         <div className="flex flex-col gap-6">
             <h1 className="section-title">📊 Tổng Quan</h1>
@@ -42,9 +56,9 @@ const DashboardPage = () => {
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard label="Doanh thu tháng" value={formatCurrency(128500000)} icon="💰" color="coral" trend={12} />
-                <StatCard label="Đơn hàng mới" value="48" icon="📦" color="mint" trend={5} />
-                <StatCard label="Người dùng" value="1,234" icon="👥" color="amber" trend={8} />
-                <StatCard label="Sản phẩm" value="89" icon="📚" color="purple" trend={-2} />
+                <StatCard label="Đơn hàng mới" value={dashboard.orderLen} icon="📦" color="mint" trend={5} />
+                <StatCard label="Người dùng" value={dashboard.userLen} icon="👥" color="amber" trend={8} />
+                <StatCard label="Sản phẩm" value={dashboard.bookLen} icon="📚" color="purple" trend={-2} />
             </div>
 
             {/* Recent orders */}
