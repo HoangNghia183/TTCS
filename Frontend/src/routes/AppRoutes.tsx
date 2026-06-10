@@ -35,7 +35,7 @@ const ProductManagePage = lazy(() => import("@/pages/admin/ProductManagePage"));
 const CouponManagePage = lazy(() => import("@/pages/admin/CouponManagePage"));
 const ReviewManagePage = lazy(() => import("@/pages/admin/ReviewManagePage"));
 const WarrantyManagePage = lazy(() => import("@/pages/admin/WarrantyManagePage"));
-
+const RevenuePage = lazy(() => import("@/pages/admin/RevenuePage"));
 const SuspenseWrap = ({ children }: { children: React.ReactNode }) => (
     <Suspense fallback={<Loading fullPage />}>{children}</Suspense>
 );
@@ -84,6 +84,7 @@ const AppRoutes = () => (
                 <Route path="admin/coupons" element={<SuspenseWrap><CouponManagePage /></SuspenseWrap>} />
                 <Route path="admin/reviews" element={<SuspenseWrap><ReviewManagePage /></SuspenseWrap>} />
                 <Route path="admin/warranty" element={<SuspenseWrap><WarrantyManagePage /></SuspenseWrap>} />
+                <Route path="admin/revenue" element={<SuspenseWrap><RevenuePage /></SuspenseWrap>} />
             </Route>
         </Route>
 
