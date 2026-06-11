@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { aiService, type ChatMessage } from "@/services/aiService";
+// import api from "@/lib/axios";
 
 const ChatWidget = () => {
     const [open, setOpen] = useState(false);
@@ -27,6 +28,9 @@ const ChatWidget = () => {
     }, [open]);
 
     const sendMessage = async () => {
+        // api.post(`ai/chat`, {
+        //     message: "xin chào"
+        // })
         if (typing) return; // ❗ chặn spam
 
         const text = input.trim();
@@ -47,12 +51,13 @@ const ChatWidget = () => {
         try {
             // ❗ giới hạn history (10 tin nhắn gần nhất)
             const history = newMessages.slice(-10);
-
+            // console.log(history);
             const reply = await aiService.sendMessage({
                 message: text,
                 history
             });
-
+            
+            // console.log(reply);
             setMessages((prev) => [
                 ...prev,
                 {
@@ -78,12 +83,11 @@ const ChatWidget = () => {
             setTyping(false);
         }
     };
-
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
             {open && (
                 <div className="w-80 h-[420px] bg-white dark:bg-card rounded-3xl shadow-2xl border border-border flex flex-col overflow-hidden animate-fade-in-up">
-                    
+
                     {/* Header */}
                     <div className="bg-gradient-to-r from-[var(--pet-coral)] to-[var(--pet-mint)] p-4 flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-xl">📚</div>
@@ -104,7 +108,7 @@ const ChatWidget = () => {
                         {messages.map((m, i) => (
                             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                 <div
-                                    className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm
+                                    className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap
                                     ${m.role === "user"
                                             ? "bg-[var(--pet-coral)] text-white"
                                             : "bg-muted text-foreground"

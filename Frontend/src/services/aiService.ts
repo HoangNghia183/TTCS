@@ -14,7 +14,7 @@ export interface ChatPayload {
 
 export const aiService = {
     sendMessage: async (payload: ChatPayload): Promise<string> => {
-        const res = await api.post<ApiResponse<{ reply: string }>>("/ai/chat", payload);
-        return res.data.data.reply;
+        const res = await api.post<ApiResponse<{ message: string }>>("/ai/chat", payload);
+        return res.data.message;
     },
 };

@@ -1,34 +1,68 @@
-import OpenAI from 'openai';
-import Product from '../models/Product.js';
+import OpenAI from "openai";
+import Product from "../models/Product.js";
+import dotenv from "dotenv";
 
-// Khởi tạo OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+dotenv.config();
+
+const client = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
 });
 
-// @desc    Chat với Bot
-// @route   POST /api/ai/chat
 export const chatWithAI = async (req, res) => {
-    const { message } = req.body;
-
     try {
-        // (Optional) Lấy 5 sản phẩm mới nhất để làm context cho AI
-        const products = await Product.find().limit(5).select('name price');
-        const productContext = products.map(p => `${p.name} giá ${p.price}đ`).join(', ');
+        const { message,history } = req.body;
+        // console.log(message);
 
-        const systemPrompt = `Bạn là trợ lý ảo của PetShop. Hãy tư vấn thân thiện. Cửa hàng đang có các sản phẩm: ${productContext}.`;
+        const products = await Product.find()
+            // .select("name price");
 
-        const completion = await openai.chat.completions.create({
+        const productContext = products
+            .map((p) => `${p.name} giá ${p.price}đ id ${p._id}`)
+            .join(",");
+
+        const systemPrompt = `
+                Bạn là trợ lý AI của Book Shop.
+
+                Thông tin sản phẩm hiện có:
+                ${productContext}
+
+                Nhiệm vụ:
+                - Tư vấn sản phẩm cho khách hàng.
+                - Trả lời thân thiện bằng tiếng Việt.
+                - Nếu không biết thì nói rõ không có thông tin.
+
+                `;
+
+        const completion = await client.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
             messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: message }
+                {
+                    role: "system",
+                    content: systemPrompt,
+                },
+                ...(history || []).map(mes=>{
+                    return {
+                        role:mes.role,
+                        content:mes.content
+                    }
+                }),
+                {
+                    role: "user",
+                    content: message,
+                },
             ],
-            model: "gpt-3.5-turbo",
+            temperature: 0.7,
         });
-
-        res.json({ reply: completion.choices[0].message.content });
+        // console.log(completion.choices[0].message.content);
+        return res.status(200).json({
+            message: completion.choices[0].message.content,
+        });
     } catch (error) {
-        console.error("OpenAI Error:", error);
-        res.status(500).json({ message: "AI đang bận, vui lòng thử lại sau" });
+        console.error("Groq Error:", error);
+
+        return res.status(500).json({
+            message: error.message,
+        });
     }
 };
