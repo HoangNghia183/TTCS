@@ -11,18 +11,19 @@ const client = new OpenAI({
 
 export const chatWithAI = async (req, res) => {
     try {
-        const { message,history } = req.body;
-        // console.log(message);
+        const { message } = req.body;
+        console.log(message);
 
         const products = await Product.find()
-            // .select("name price");
+            .limit(5)
+            .select("name price");
 
         const productContext = products
-            .map((p) => `${p.name} giá ${p.price}đ id ${p._id}`)
-            .join(",");
+            .map((p) => `${p.name} giá ${p.price}đ`)
+            .join(",\n");
 
         const systemPrompt = `
-                Bạn là trợ lý AI của Book Shop.
+                Bạn là trợ lý AI của PetShop.
 
                 Thông tin sản phẩm hiện có:
                 ${productContext}
@@ -31,7 +32,6 @@ export const chatWithAI = async (req, res) => {
                 - Tư vấn sản phẩm cho khách hàng.
                 - Trả lời thân thiện bằng tiếng Việt.
                 - Nếu không biết thì nói rõ không có thông tin.
-
                 `;
 
         const completion = await client.chat.completions.create({
@@ -41,12 +41,6 @@ export const chatWithAI = async (req, res) => {
                     role: "system",
                     content: systemPrompt,
                 },
-                ...(history || []).map(mes=>{
-                    return {
-                        role:mes.role,
-                        content:mes.content
-                    }
-                }),
                 {
                     role: "user",
                     content: message,
@@ -54,7 +48,7 @@ export const chatWithAI = async (req, res) => {
             ],
             temperature: 0.7,
         });
-        // console.log(completion.choices[0].message.content);
+        console.log(completion.choices[0].message.content);
         return res.status(200).json({
             message: completion.choices[0].message.content,
         });
