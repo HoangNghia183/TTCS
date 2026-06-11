@@ -9,7 +9,7 @@ export const formatDate = (dateStr: string): string => {
         year: "numeric",
     });
 };
-export function formatDateISO(isoString:string) {
+export function formatDateISO(isoString:string,fe:boolean=true) {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) {
         return "Ngày không hợp lệ";
@@ -17,7 +17,8 @@ export function formatDateISO(isoString:string) {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Tháng trong JS tính từ 0-11
     const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    if(fe) return `${day}-${month}-${year}`;
+    else return `${year}-${month}-${day}`;
 }
 
 export const formatDateTime = (dateStr: string): string => {

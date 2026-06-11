@@ -9,7 +9,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import api from "@/lib/axios";
-import { formatCurrency } from "@/utils/format";
+import { formatCurrency,formatDateISO } from "@/utils/format";
 
 interface RevenueDaily {
   day: string;
@@ -26,16 +26,17 @@ const RevenuePage = () => {
   const getDefaultDates = () => {
     const now = new Date();
     const begin = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+    console.log(end.toString());  
     return {
-      begin: begin.toISOString().split('T')[0],
-      end: end.toISOString().split('T')[0]
+      begin: formatDateISO(begin.toString(),false),
+      end: formatDateISO(end.toString(),false)
     };
   };
 
   useEffect(() => {
     const defaults = getDefaultDates();
+    console.log(defaults);
     setBeginDay(defaults.begin);
     setEndDay(defaults.end);
   }, []);
@@ -45,11 +46,11 @@ const RevenuePage = () => {
       setLoading(true);
       const params = new URLSearchParams();
       if (beginDay) params.append('beginDay', beginDay);
-      if (endDay) params.append('endDay', endDay);
+      if (endDay) params.append('endDay', endDay);  
       
       const res = await api.get(`/admin/revenue?${params.toString()}`);
-      console.log(params.toString());
-      console.log(res.data);
+      // console.log(params.toString());
+      // console.log(res.data);
       const dailyData = res.data.revenueDaily.map((value: any) => ({
         day: value._id,
         revenue: value.total

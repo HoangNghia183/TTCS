@@ -13,7 +13,7 @@ export const formatDate = (date) => {
     if (!date) return '';
     return moment(date).format('DD/MM/YYYY HH:mm');
 };
-export const formatDate2 = (dateString,format)=>{
+export const formatDate2 = (dateString)=>{
     if(!dateString) return '';
     const res = moment(dateString,"YYYY-MM-DD").toDate();
     return res;

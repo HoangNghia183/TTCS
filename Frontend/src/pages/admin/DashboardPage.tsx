@@ -2,8 +2,8 @@ import StatCard from "@/components/features/admin/StatCard";
 import { formatCurrency,formatDateISO } from "@/utils/format";
 import { useEffect, useState } from "react";
 import { orderService } from "@/services/orderService"
-import { userService } from "@/services/userService";
-import { productService } from "@/services/productService";
+// import { userService } from "@/services/userService";
+// import { productService } from "@/services/productService";
 import api from "@/lib/axios";
 // import type { Order } from "@/types/order";
 import { Link } from "react-router";

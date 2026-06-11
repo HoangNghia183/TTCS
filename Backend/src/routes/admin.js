@@ -66,18 +66,18 @@ router.get('/revenue',
         let { beginDay, endDay } = req.query;
         const now = new Date();
         // console.log(now.getDay());
-        console.log("begin ", beginDay);
-        console.log("end ", endDay);
+        // console.log("begin ", beginDay);
+        // console.log("end ", endDay);
         if (!beginDay) {
             beginDay = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         }
         if (!endDay) {
-            endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
         }
         beginDay = formatDate2(beginDay);
         endDay = formatDate2(endDay);
-        console.log("begin ", beginDay);
-        console.log("end ", endDay);
+        // console.log("begin ", beginDay);
+        // console.log("end ", endDay);
         const revenueMonth = await Order.aggregate([
             {
                 $match: {
