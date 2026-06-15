@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import Product from "../models/Product.js";
 import dotenv from "dotenv";
-
+import { getEmbedding } from "../utils/embed.js";
 dotenv.config();
 
 const client = new OpenAI({
@@ -13,29 +13,65 @@ export const chatWithAI = async (req, res) => {
     try {
         const { message } = req.body;
         console.log(message);
+        const rewriteResponse = await client.chat.completions.create({
+            model: process.env.OPENAI_MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: `Bạn là trợ lý xử lý ngôn ngữ. Nhiệm vụ của bạn là lấy câu nói của khách hàng và chuyển nó thành một chuỗi từ khóa ngắn gọn, tập trung hoàn toàn vào tên sách, tác giả hoặc thể loại để phục vụ việc tìm kiếm database vector. 
+Xóa bỏ hoàn toàn từ chào hỏi, từ thừa (chào shop, ạ, nhé, không biết...). 
+Chỉ trả về chuỗi từ khóa tìm kiếm cốt lõi, không giải thích gì thêm.
 
-        const products = await Product.find()
-            .limit(5)
-            .select("name price");
+Ví dụ: "Dạ chào shop, không biết bên mình có cuốn đắc nhân tâm ko ạ" -> "Đắc Nhân Tâm"
+Ví dụ: "tư vấn mình truyện ma nào rùng rợn tí" -> "truyện ma kinh dị rùng rợn"`
+                },
+                { role: "user", content: message }
+            ],
+            temperature: 0.1 // Giữ nhiệt độ thấp để AI làm việc chính xác, không bịa chữ
+        });
 
-        const productContext = products
+        const optimizedSearchQuery = rewriteResponse.choices[0].message.content.trim();
+        console.log("Câu tìm kiếm sau khi tối ưu:", optimizedSearchQuery); 
+
+        const queryVector = await getEmbedding(optimizedSearchQuery);
+
+        const relatedProducts = await Product.aggregate([
+            {
+                "$vectorSearch": {
+                    "index": "vector_index",
+                    "path": "embedding",
+                    "queryVector": queryVector,
+                    "numCandidates": 20,
+                    "limit": 3
+                }
+            },
+            { "$project": { "name": 1, "description": 1, "price": 1, "slug": 1 } }
+        ]);
+        console.log(relatedProducts);
+        // const products = await Product.find()
+        //     .limit(5)
+        //     .select("name price");
+
+        const productContext = relatedProducts
             .map((p) => `${p.name} giá ${p.price}đ`)
             .join(",\n");
+        
 
         const systemPrompt = `
-                Bạn là trợ lý AI của PetShop.
+                Bạn là trợ lý AI của Book Shop.
 
-                Thông tin sản phẩm hiện có:
-                ${productContext}
+                sản phẩm đã có:
+                ${productContext}                
 
                 Nhiệm vụ:
                 - Tư vấn sản phẩm cho khách hàng.
                 - Trả lời thân thiện bằng tiếng Việt.
                 - Nếu không biết thì nói rõ không có thông tin.
+                - Chỉ sử dụng sản phẩm đã có trong prompt không nói đến những sách không có trong prompt.
                 `;
 
         const completion = await client.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
+            model: process.env.OPENAI_MODEL,
             messages: [
                 {
                     role: "system",

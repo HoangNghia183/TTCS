@@ -15,7 +15,11 @@ router.get("/dashboard",
         try {
             const users = await User.find({});
             const products = await Product.find({});
-            const orders = await Order.find({ status: "Processing" });
+            const orders = await Order.find({ 
+                status:{
+                    $in:["Pending","Processing"]
+                }
+            });
             const now = new Date();
             const startMonth = new Date(
                 now.getFullYear(),
@@ -60,8 +64,8 @@ router.get("/dashboard",
     }
 )
 router.get('/revenue',
-    // protectedRoute,
-    // adminRoute,
+    protectedRoute,
+    adminRoute,
     async (req, res) => {
         let { beginDay, endDay } = req.query;
         const now = new Date();

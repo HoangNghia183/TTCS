@@ -4,6 +4,8 @@ import APIFeatures from '../utils/apiFeatures.js';
 import OwnedBook from '../models/OwnedBook.js';
 import { cloudinary } from '../config/cloudinary.js';
 import Category from '../models/Category.js'
+import { getEmbedding } from '../utils/embed.js'
+import { text } from 'express';
 // @desc    Lấy tất cả sản phẩm (Có lọc nâng cao, sort, phân trang)
 // @route   GET /api/products
 
@@ -171,7 +173,12 @@ export const createProduct = async (req, res) => {
         if (!name || !price) {
             return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
         }
-
+        const textToEmbed = `
+            tên sách: ${name}.
+            mô tả: ${description}.
+            thể loại: ${category}.
+        `
+        const vectorEmbed = await getEmbedding(textToEmbed);
         // 2. Xử lý chuẩn hóa dữ liệu bằng helper
         const parsedSpecs = parseSpecifications(specifications);
         const productSlug = generateSlug(name);
@@ -185,7 +192,8 @@ export const createProduct = async (req, res) => {
             description,
             category,
             user: req.user._id,
-            specifications: parsedSpecs
+            specifications: parsedSpecs,
+            embedding:vectorEmbed
         };
 
         // 3. Xử lý tạo Danh mục mới nếu có
@@ -259,6 +267,12 @@ export const updateProduct = async (req, res) => {
         if (!oldProduct) {
             return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
         }
+        const textToEmbed = `
+            tên sách: ${name}.
+            mô tả: ${description}.
+            thể loại: ${category}.
+        `
+        const vectorEmbed = await getEmbedding(textToEmbed);
 
         const parsedSpecs = parseSpecifications(specifications);
         const productSlug = generateSlug(name || oldProduct.name);
@@ -272,7 +286,8 @@ export const updateProduct = async (req, res) => {
             description,
             category,
             user: req.user._id,
-            specifications: parsedSpecs
+            specifications: parsedSpecs,
+            embedding:vectorEmbed
         };
 
         if (category === "" && newCategoryName) {

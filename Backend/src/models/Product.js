@@ -14,7 +14,10 @@ const productSchema = new mongoose.Schema({
         ref: 'Category', 
         required: true 
     },
-    
+    embedding: {
+        type: [Number],
+        default: [] // Ban đầu tạo sách chưa có vector thì để mảng rỗng
+    },
     // Thông số kỹ thuật (Dành cho Nhà Sách)
     // VD: { "author": "Nam Cao", "publisher": "NXB Kim Đồng", "pages": "200", "format": "Bìa mềm" }
     specifications: {

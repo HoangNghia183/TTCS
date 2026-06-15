@@ -94,7 +94,7 @@ const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props
                 }
             }
         });
-        if (!product) {
+        if (!product?._id) {
             try {
                 setSubmitting(true);
                 await productService.create(formData);
