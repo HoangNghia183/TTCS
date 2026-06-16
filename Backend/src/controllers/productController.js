@@ -168,7 +168,7 @@ export const createProduct = async (req, res) => {
             name, price, stock, description, category, specifications,
             newCategoryName = "", newCategoryDescription = ""
         } = req.body;
-
+        console.log(req.body);
         // 1. Validate dữ liệu đầu vào bắt buộc
         if (!name || !price) {
             return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
@@ -177,6 +177,7 @@ export const createProduct = async (req, res) => {
             tên sách: ${name}.
             mô tả: ${description}.
             thể loại: ${category}.
+
         `
         const vectorEmbed = await getEmbedding(textToEmbed);
         // 2. Xử lý chuẩn hóa dữ liệu bằng helper
@@ -262,17 +263,14 @@ export const updateProduct = async (req, res) => {
             imgFile,
             bookFile
         } = req.body;
-
-        const oldProduct = await Product.findById(req.params.id);
+        // console.log(req.body);
+        const oldProduct = await Product.findById(req.params.id).populate('category');
         if (!oldProduct) {
             return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
         }
-        const textToEmbed = `
-            tên sách: ${name}.
-            mô tả: ${description}.
-            thể loại: ${category}.
-        `
-        const vectorEmbed = await getEmbedding(textToEmbed);
+        let embedForm = {
+            category:oldProduct.category.name
+        }
 
         const parsedSpecs = parseSpecifications(specifications);
         const productSlug = generateSlug(name || oldProduct.name);
@@ -287,7 +285,7 @@ export const updateProduct = async (req, res) => {
             category,
             user: req.user._id,
             specifications: parsedSpecs,
-            embedding:vectorEmbed
+            // embedding:vectorEmbed
         };
 
         if (category === "" && newCategoryName) {
@@ -301,8 +299,10 @@ export const updateProduct = async (req, res) => {
                     description: newCategoryDescription
                 });
             }
+            embedForm.category = existingCat.name;
             productData.category = existingCat._id;
         }
+        
 
         if (imgFile) {
             productData.images = Array.isArray(imgFile) ? imgFile : [imgFile];
@@ -321,7 +321,19 @@ export const updateProduct = async (req, res) => {
         } else {
             productData.dLoadLink = oldProduct.dLoadLink;
         }
-
+        embedForm = {
+            ...embedForm,
+            product:name,
+            description,
+        }
+        console.log(embedForm);
+        const textToEmbed = `
+            tên sách: ${embedForm.product}.
+            mô tả: ${description}.
+            thể loại: ${embedForm.category}.
+        `
+        const vectorEmbed = await getEmbedding(textToEmbed);
+        productData.embedding = vectorEmbed;
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, productData, {
             new: true,
             runValidators: true

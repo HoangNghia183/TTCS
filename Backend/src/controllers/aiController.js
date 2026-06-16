@@ -11,19 +11,20 @@ const client = new OpenAI({
 
 export const chatWithAI = async (req, res) => {
     try {
-        const { message } = req.body;
-        console.log(message);
+        const { message, history=[] } = req.body;
+        // console.log(message);
         const rewriteResponse = await client.chat.completions.create({
             model: process.env.OPENAI_MODEL,
             messages: [
                 {
                     role: "system",
-                    content: `Bạn là trợ lý xử lý ngôn ngữ. Nhiệm vụ của bạn là lấy câu nói của khách hàng và chuyển nó thành một chuỗi từ khóa ngắn gọn, tập trung hoàn toàn vào tên sách, tác giả hoặc thể loại để phục vụ việc tìm kiếm database vector. 
+                    content: `Bạn là trợ lý xử lý ngôn ngữ. Nhiệm vụ của bạn là lấy câu nói của khách hàng và chuyển nó thành một chuỗi từ khóa ngắn gọn, tập trung hoàn toàn vào tên sách, tác giả, thể loại hoặc nội dung ngắn gọn để phục vụ việc tìm kiếm database vector. 
 Xóa bỏ hoàn toàn từ chào hỏi, từ thừa (chào shop, ạ, nhé, không biết...). 
-Chỉ trả về chuỗi từ khóa tìm kiếm cốt lõi, không giải thích gì thêm.
+Chỉ trả về chuỗi từ khóa tìm kiếm cốt lõi hoặc suy luận ra từ khoá tìm kiếm cốt lõi liên quan, không giải thích gì thêm.
 
 Ví dụ: "Dạ chào shop, không biết bên mình có cuốn đắc nhân tâm ko ạ" -> "Đắc Nhân Tâm"
-Ví dụ: "tư vấn mình truyện ma nào rùng rợn tí" -> "truyện ma kinh dị rùng rợn"`
+Ví dụ: "tư vấn mình truyện ma nào rùng rợn tí" -> "truyện ma kinh dị rùng rợn"
+Ví dụ: "tôi muốn học code" -> "công nghệ thông tin"`
                 },
                 { role: "user", content: message }
             ],
@@ -42,18 +43,22 @@ Ví dụ: "tư vấn mình truyện ma nào rùng rợn tí" -> "truyện ma kin
                     "path": "embedding",
                     "queryVector": queryVector,
                     "numCandidates": 20,
-                    "limit": 3
+                    "limit": 5
                 }
             },
-            { "$project": { "name": 1, "description": 1, "price": 1, "slug": 1 } }
+            { "$project": { "name": 1, "description": 1, "price": 1, "slug": 1 ,"category":1} }
         ]);
-        console.log(relatedProducts);
+        await Product.populate(relatedProducts,{
+            path:'category'
+        })
+        // console.log(relatedProducts);
+        // console.log(relatedProducts);
         // const products = await Product.find()
         //     .limit(5)
         //     .select("name price");
-
+        
         const productContext = relatedProducts
-            .map((p) => `${p.name} giá ${p.price}đ`)
+            .map((p) => `${p.name} giá ${p.price}đ thể loại ${p.category.name} mô tả sách ${p.description}`)
             .join(",\n");
         
 
@@ -65,18 +70,23 @@ Ví dụ: "tư vấn mình truyện ma nào rùng rợn tí" -> "truyện ma kin
 
                 Nhiệm vụ:
                 - Tư vấn sản phẩm cho khách hàng.
-                - Trả lời thân thiện bằng tiếng Việt.
-                - Nếu không biết thì nói rõ không có thông tin.
-                - Chỉ sử dụng sản phẩm đã có trong prompt không nói đến những sách không có trong prompt.
+                - Trả lời thân thiện và ngắn gọn bằng tiếng Việt.
+                - Nếu không có thông tin trong những thông tin được cung cấp hãy trả lời là không có thông tin.
                 `;
 
         const completion = await client.chat.completions.create({
             model: process.env.OPENAI_MODEL,
             messages: [
-                {
+                {   
                     role: "system",
                     content: systemPrompt,
                 },
+                ...history.map(value=>{
+                    return {
+                        role:value.role,
+                        content:value.content
+                    }
+                }),
                 {
                     role: "user",
                     content: message,
@@ -84,7 +94,7 @@ Ví dụ: "tư vấn mình truyện ma nào rùng rợn tí" -> "truyện ma kin
             ],
             temperature: 0.7,
         });
-        console.log(completion.choices[0].message.content);
+        // console.log(completion.choices[0].message.content);
         return res.status(200).json({
             message: completion.choices[0].message.content,
         });
