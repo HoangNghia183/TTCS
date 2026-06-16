@@ -255,6 +255,7 @@ export const updateProduct = async (req, res) => {
         const {
             name,
             price,
+            originalPrice,
             stock,
             description,
             category,
@@ -264,7 +265,7 @@ export const updateProduct = async (req, res) => {
             imgFile,
             bookFile
         } = req.body;
-        // console.log(req.body);
+        console.log(req.body);
         const oldProduct = await Product.findById(req.params.id).populate('category');
         if (!oldProduct) {
             return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
@@ -280,7 +281,7 @@ export const updateProduct = async (req, res) => {
             name: name ?? oldProduct.name,
             slug: productSlug,
             price: Number(price),
-            originPrice: price,
+            originalPrice: Number(originalPrice),
             stock: stock ? Number(stock) : 0,
             description,
             category,
@@ -335,6 +336,7 @@ export const updateProduct = async (req, res) => {
         `
         const vectorEmbed = await getEmbedding(textToEmbed);
         productData.embedding = vectorEmbed;
+        // console.log(productData);
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, productData, {
             new: true,
             runValidators: true

@@ -13,9 +13,9 @@ router.get("/dashboard",
     adminRoute,
     async (req, res) => {
         try {
-            const users = await User.find({});
-            const products = await Product.find({});
-            const orders = await Order.find({ 
+            const users = await User.countDocuments({});
+            const products = await Product.countDocuments({});
+            const orders = await Order.countDocuments({ 
                 status:{
                     $in:["Pending","Processing"]
                 }
@@ -31,6 +31,8 @@ router.get("/dashboard",
                 now.getMonth() + 1,
                 1
             )
+            const lastMonth = new Date(now.getFullYear(),now.getMonth()-1,1);
+            console.log(lastMonth,startMonth,endMonth);
             const revenue = await Order.aggregate([
                 {
                     $match: {
@@ -50,11 +52,34 @@ router.get("/dashboard",
                     }
                 }
             ])
+            const revenueLastMonth = await Order.aggregate([
+                {
+                    $match: {
+                        createdAt: {
+                            $gte: lastMonth,
+                            $lte: startMonth
+                        },
+                        status: "Delivered"
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        revenue: {
+                            $sum: "$totalPrice"
+                        }
+                    }
+                }
+            ])
+            const trend = Math.ceil((revenue[0].revenue/revenueLastMonth[0].revenue-1)*100)
+            console.log(revenue[0].revenue);
+            console.log(revenueLastMonth[0].revenue);
             res.json({
                 revenue: revenue[0].revenue,
-                userLen: users.length,
-                bookLen: products.length,
-                orderLen: orders.length
+                userLen: users,
+                bookLen: products,
+                orderLen: orders,
+                trend
             })
         } catch (er) {
             res.json({
