@@ -173,13 +173,6 @@ export const createProduct = async (req, res) => {
         if (!name || !price) {
             return res.status(400).json({ message: 'Tên sản phẩm và giá là bắt buộc' });
         }
-        const textToEmbed = `
-            tên sách: ${name}.
-            mô tả: ${description}.
-            thể loại: ${category}.
-
-        `
-        const vectorEmbed = await getEmbedding(textToEmbed);
         // 2. Xử lý chuẩn hóa dữ liệu bằng helper
         const parsedSpecs = parseSpecifications(specifications);
         const productSlug = generateSlug(name);
@@ -193,8 +186,7 @@ export const createProduct = async (req, res) => {
             description,
             category,
             user: req.user._id,
-            specifications: parsedSpecs,
-            embedding:vectorEmbed
+            specifications: parsedSpecs
         };
 
         // 3. Xử lý tạo Danh mục mới nếu có
@@ -211,6 +203,7 @@ export const createProduct = async (req, res) => {
             }
             productData.category = existingCat._id;
         }
+        const categoryName = await Category.findById(productData.category);
 
         // 4. Xử lý Upload Files sử dụng 2 hàm riêng biệt
         const files = req.files || {};
@@ -234,8 +227,16 @@ export const createProduct = async (req, res) => {
                 return res.status(400).json({ message: `Book file upload failed: ${bookErr.message}` });
             }
         }
-
+        // console.log(name,description,categoryName);
+        const textToEmbed = `
+            tên sách: ${name}.
+            mô tả: ${description}.
+            thể loại: ${categoryName}.
+        `
+        const vectorEmbed = await getEmbedding(textToEmbed);
         // 5. Lưu vào Database và phản hồi client
+        productData.embedding = vectorEmbed;
+        // console.log(productData);
         const product = new Product(productData);
         const createdProduct = await product.save();
 
