@@ -24,7 +24,7 @@ export const useUIStore = create<UIStore>()(
             },
         }),
         {
-            name: "bookstore-ui",
+            name: "petmart-ui",
             onRehydrateStorage: () => (state) => {
                 // Apply persisted dark mode on page load
                 if (state?.isDark) {

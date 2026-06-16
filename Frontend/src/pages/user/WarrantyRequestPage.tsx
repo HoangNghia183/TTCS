@@ -28,8 +28,8 @@ const WarrantyRequestPage = () => {
             await warrantyService.createRequest(data);
             toast.success("Yêu cầu bảo hành đã được gửi!");
             navigate("/orders");
-        } catch {
-            toast.error("Không thể gửi yêu cầu. Vui lòng thử lại.");
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Không thể gửi yêu cầu. Vui lòng thử lại.");
         } finally {
             setSubmitting(false);
         }

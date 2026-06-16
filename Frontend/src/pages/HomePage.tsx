@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { petCategories } from "@/types/product";
+// import { petCategories } from "@/types/product";
 import type { Product } from "@/types/product";
 import { productService } from "@/services/productService";
 import ProductList from "@/components/features/product/ProductList";
@@ -8,8 +8,8 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 // ── Inline skeleton row for ProductList sections ──────────────────────────
 const ProductRowSkeleton = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 animate-pulse">
-    {Array.from({ length: 6 }).map((_, i) => (
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 animate-pulse">
+    {Array.from({ length: 8 }).map((_, i) => (
       <div key={i} className="rounded-2xl border border-border overflow-hidden bg-white dark:bg-card">
         <div className="bg-muted aspect-square w-full" />
         <div className="p-3 flex flex-col gap-2">
@@ -24,25 +24,22 @@ const ProductRowSkeleton = () => (
 const HomePage = () => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin" || user?.role === "staff";
-  const [activeCategory, setActiveCategory] = useState("all");
+  // const [activeCategory, setActiveCategory] = useState("all");
   const [email, setEmail] = useState("");
 
   const [pets, setPets] = useState<Product[]>([]);
-  const [accessories, setAccessories] = useState<Product[]>([]);
+  // const [accessories, setAccessories] = useState<Product[]>([]);
   const [petsLoading, setPetsLoading] = useState(true);
-  const [accLoading, setAccLoading] = useState(true);
+  // const [accLoading, setAccLoading] = useState(true);
 
   // Fetch featured pets and accessories concurrently on mount
   useEffect(() => {
-    productService.getAll({ sort: "popular", limit: 6 })
+    productService.getAll({ sort: "popular", limit: 8 })
       .then((res) => setPets(res.data.filter((p) => p.category !== "accessory")))
       .catch(() => {/* silently fail — home page shows empty sections on error */ })
       .finally(() => setPetsLoading(false));
 
-    productService.getAll({ category: "accessory", sort: "popular", limit: 6 })
-      .then((res) => setAccessories(res.data))
-      .catch(() => { })
-      .finally(() => setAccLoading(false));
+    // Accessories fetch removed
   }, []);
 
   const features = [
@@ -160,7 +157,7 @@ const HomePage = () => {
 
 
       {/* ============================================================ */}
-      {/*  3. FEATURED PETS                                             */}
+      {/*  3. FEATURED BOOKS                                             */}
       {/* ============================================================ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {petsLoading ? (

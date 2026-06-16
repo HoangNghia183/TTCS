@@ -17,6 +17,9 @@ import couponRoutes from './routes/couponRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import warrantyRoutes from './routes/warrantyRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import newsletterRoutes from './routes/newsletterRoutes.js';
 
 
 // Cấu hình
@@ -41,6 +44,9 @@ app.use(express.urlencoded({ extended: true }));
 // 4. Xử lý Cookies
 app.use(cookieParser());
 
+// 5. Serve Static Files for Uploads
+app.use('/uploads', express.static('uploads'));
+
 // --- Routes Definition ---
 
 // Auth & Users
@@ -61,10 +67,13 @@ app.use('/api/collection', collectionRoutes); // Yêu thích
 app.use('/api/posts', postRoutes);            // Blog & Forum
 app.use('/api/warranty', warrantyRoutes);     // Bảo hành
 app.use('/api/reviews', reviewRoutes);        // Đánh giá
+app.use('/api/cart', cartRoutes);             // Giỏ hàng
+app.use('/api/admin', adminRoutes);           // Admin Dashboard
+app.use('/api/newsletter', newsletterRoutes); // Bản tin
 
 // Default Route (Kiểm tra server sống hay chết)
 app.get('/', (req, res) => {
-    res.send('PetShop API is running...');
+    res.send('BookStore API is running...');
 });
 
 // --- Global Error Handler (Bắt lỗi toàn app để không crash server) ---

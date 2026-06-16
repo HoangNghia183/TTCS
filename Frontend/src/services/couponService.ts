@@ -1,34 +1,46 @@
 import api from "@/lib/axios";
 import type { Coupon } from "@/types/coupon";
-import type { ApiResponse } from "@/types/api";
 
-export interface ApplyCouponResult {
+export interface CouponCheckResult {
+    valid: boolean;
     discountAmount: number;
-    coupon: Coupon;
+    couponId: string;
+}
+
+export interface CouponPayload {
+    code: string;
+    discountType: "percent" | "fixed";
+    discountValue: number;
+    minOrderValue: number;
+    usageLimit: number;
+    endDate: string;
 }
 
 export const couponService = {
-    checkCoupon: async (code: string, orderTotal: number): Promise<ApplyCouponResult> => {
-        const res = await api.post<ApiResponse<ApplyCouponResult>>("/coupons/check", {
+    // POST /api/coupons/check — backend returns { valid, discountAmount, couponId } directly (no ApiResponse wrapper)
+    checkCoupon: async (code: string, orderTotal: number): Promise<CouponCheckResult> => {
+        const res = await api.post<CouponCheckResult>("/coupons/check", {
             code,
             orderTotal,
         });
-        return res.data.data;
+        return res.data;
     },
 
-    getAllCoupons: async (): Promise<Coupon[]> => {
-        const res = await api.get<ApiResponse<Coupon[]>>("/coupons");
-        return res.data.data;
+    getAllCoupons: async (limit?: number): Promise<Coupon[]> => {
+        const res = await api.get<Coupon[]>("/coupons", {
+            params: limit ? { limit } : undefined,
+        });
+        return res.data;
     },
 
-    createCoupon: async (data: Omit<Coupon, "_id" | "usedCount" | "createdAt">): Promise<Coupon> => {
-        const res = await api.post<ApiResponse<Coupon>>("/coupons", data);
-        return res.data.data;
+    createCoupon: async (data: CouponPayload): Promise<Coupon> => {
+        const res = await api.post<Coupon>("/coupons", data);
+        return res.data;
     },
 
-    updateCoupon: async (id: string, data: Partial<Coupon>): Promise<Coupon> => {
-        const res = await api.put<ApiResponse<Coupon>>(`/coupons/${id}`, data);
-        return res.data.data;
+    updateCoupon: async (id: string, data: Partial<CouponPayload> & { isActive?: boolean }): Promise<Coupon> => {
+        const res = await api.patch<Coupon>(`/coupons/${id}`, data);
+        return res.data;
     },
 
     deleteCoupon: async (id: string): Promise<void> => {

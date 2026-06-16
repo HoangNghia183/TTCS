@@ -6,7 +6,7 @@ import { Link } from "react-router";
 
 interface Review {
     _id: string;
-    userId: { displayName: string; avatarUrl?: string };
+    user: { displayName: string; avatarUrl?: string };
     rating: number;
     comment: string;
     createdAt: string;
@@ -112,10 +112,10 @@ const ProductReviews = ({
                     <div key={r._id} className="p-4 bg-white dark:bg-card rounded-2xl border border-border">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--pet-coral)] to-[var(--pet-mint)] flex items-center justify-center text-white text-sm font-bold">
-                                {r.userId.displayName?.[0]}
+                                {r.user?.displayName?.[0] || "?"}
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-foreground">{r.userId.displayName}</p>
+                                <p className="text-sm font-bold text-foreground">{r.user?.displayName || "Người dùng ẩn danh"}</p>
                                 <div className="flex">
                                     {[1, 2, 3, 4, 5].map((s) => (
                                         <span key={s} className="text-xs">{s <= r.rating ? "⭐" : ""}</span>

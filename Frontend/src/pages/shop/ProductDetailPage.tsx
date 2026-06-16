@@ -6,6 +6,7 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { formatCurrency } from "@/utils/format";
 import ProductReviews from "@/components/features/product/ProductReviews";
+import ProductList from "@/components/features/product/ProductList";
 import { toast } from "sonner";
 
 // ── Detail page skeleton ──────────────────────────────────────────────────
@@ -38,6 +39,7 @@ const ProductDetailPage = () => {
     const navigate = useNavigate();
 
     const [product, setProduct] = useState<Product | null>(null);
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
     const [qty, setQty] = useState(1);
@@ -45,12 +47,25 @@ const ProductDetailPage = () => {
 
     useEffect(() => {
         if (!id) return;
+        window.scrollTo(0, 0);
         let cancelled = false;
         setLoading(true);
         setNotFound(false);
 
         productService.getById(id)
-            .then((p) => { if (!cancelled) setProduct(p); })
+            .then((p) => { 
+                if (!cancelled) {
+                    setProduct(p);
+                    // Fetch related products
+                    if (p.categoryId) {
+                        productService.getAll({ category: p.categoryId, limit: 5 })
+                            .then(res => {
+                                if (!cancelled) setRelatedProducts(res.data.filter(rp => rp.id !== p.id).slice(0, 4));
+                            })
+                            .catch(() => {});
+                    }
+                } 
+            })
             .catch(() => { if (!cancelled) setNotFound(true); })
             .finally(() => { if (!cancelled) setLoading(false); });
 
@@ -114,10 +129,10 @@ const ProductDetailPage = () => {
                         {product.name}
                     </h1>
 
-                    {product.breed && (
+                    {product.author && (
                         <p className="text-muted-foreground text-sm">
-                            📖 Tác giả/NXB: <strong>{product.breed}</strong>
-                            {product.age && <> ⏳ Năm XB: <strong>{product.age}</strong></>}
+                            📖 Tác giả: <strong>{product.author}</strong>
+                            {product.publisher && <> ⏳ NXB: <strong>{product.publisher}</strong></>}
                         </p>
                     )}
 
@@ -186,7 +201,24 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Reviews */}
-            <ProductReviews productId={product.id} />
+            <ProductReviews 
+                productId={product.id} 
+                reviews={product.reviews as any} 
+                averageRating={product.rating}
+                onReviewAdded={() => {
+                    productService.getById(product.id).then(setProduct).catch(() => {});
+                }}
+            />
+
+            {/* Related products */}
+            {relatedProducts.length > 0 && (
+                <div className="mt-16">
+                    <ProductList 
+                        products={relatedProducts} 
+                        title="Bạn có thể sẽ thích" 
+                    />
+                </div>
+            )}
         </div>
     );
 };

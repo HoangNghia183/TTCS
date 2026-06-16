@@ -22,8 +22,8 @@ const CommentSection = ({ postId, comments, onCommentAdded }: CommentSectionProp
         if (!content.trim()) return;
         setLoading(true);
         try {
-            const comment = await postService.addComment(postId, content.trim());
-            onCommentAdded(comment);
+            const res = await postService.addComment(postId, { rating: 5, content: content.trim() });
+            onCommentAdded(res.comment as any);
             setContent("");
             toast.success("Đã thêm bình luận!");
         } catch {

@@ -1,32 +1,44 @@
-import {create} from "zustand";
-import {toast} from "sonner";
+import { create } from "zustand";
+import { toast } from "sonner";
 import { authService } from "@/services/authService";
 import type { AuthState } from "@/types/store";
+import type { User } from "@/types/user";
 
-//file này dùng để quản lý trạng thái xác thực người dùng trong ứng dụng frontend bằng thư viện Zustand.
+const getAuthError = (error: unknown) =>
+    (error as { response?: { data?: { code?: string; email?: string; message?: string } } }).response?.data;
+
+const normalizeUser = (user: User): User => ({
+    ...user,
+    avatarUrl: user.avatarUrl || user.avatar || user.photoURL || user.image || "",
+});
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     accessToken: null,
-    user: null, 
+    user: null,
     loading: false,
+    initialized: false,
+
     setAccessToken: (accessToken) => {
         set({ accessToken });
     },
 
+    setUser: (user) => {
+        set({ user: user ? normalizeUser(user) : null });
+    },
+
     clearState: () => {
-        set({accessToken: null, user: null, loading: false});
+        set({ accessToken: null, user: null, loading: false, initialized: true });
     },
 
     signUp: async (username, password, email, firstname, lastname) => {
         try {
             set({ loading: true });
-            // Gọi API đăng ký
-            await authService.signUp(username, password, email, firstname, lastname);
-
-            toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+            const response = await authService.signUp(username, password, email, firstname, lastname);
+            toast.success(response.message || "Mã OTP đã được gửi đến email của bạn.");
+            return response;
         } catch (error) {
-            console.error("Đăng ký thất bại:", error);
-            toast.error("Đăng ký thất bại. Vui lòng thử lại.");
+            const authError = getAuthError(error);
+            toast.error(authError?.message || "Đăng ký thất bại. Vui lòng thử lại.");
             throw error;
         } finally {
             set({ loading: false });
@@ -36,17 +48,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     signIn: async (username, password) => {
         try {
             set({ loading: true });
-            
-            const {accessToken} = await authService.signIn(username, password);
 
+            const { accessToken } = await authService.signIn(username, password);
             get().setAccessToken(accessToken);
 
             await get().fetchMe();
+            set({ initialized: true });
 
             toast.success("Đăng nhập thành công!");
         } catch (error) {
             console.error("Đăng nhập thất bại:", error);
-            toast.error("Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.");
+            const authError = getAuthError(error);
+            toast.error(
+                authError?.code === "EMAIL_NOT_VERIFIED"
+                    ? "Vui lòng xác minh email trước khi đăng nhập."
+                    : "Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại."
+            );
             throw error;
         } finally {
             set({ loading: false });
@@ -70,18 +87,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     fetchMe: async () => {
         try {
             set({ loading: true });
-        const res = await authService.fetchMe();
-        
-        // KIỂM TRA LOG Ở ĐÂY ĐỂ DEBUG
-        console.log("Raw response from service:", res);
 
-        // Giả sử res trả về object { user: {...} }, ta chỉ lấy phần ruột
-        // Nếu res chính là user info thì giữ nguyên, nếu bọc trong 'user' thì lấy res.user
-        const userData = res.user ? res.user : res; 
-        
-        set({ user: userData }); 
-        
-        console.log("User saved to store:", userData);
+            const res = await authService.fetchMe();
+            const userData = normalizeUser(res.user ? res.user : res);
+
+            set({ user: userData });
         } catch (error) {
             console.error("Lấy thông tin người dùng thất bại:", error);
             set({ user: null, accessToken: null });
@@ -89,28 +99,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             throw error;
         } finally {
             set({ loading: false });
-        }       
-    },  
+        }
+    },
+
     refresh: async () => {
         try {
-            set ({ loading: true });
-            const {user, fetchMe} = get();
+            set({ loading: true });
 
-            const response = await authService.refresh();
-            const newAccessToken = response.accessToken || response; // Bắt trường hợp trả về object hoặc string
-        
+            const newAccessToken = await authService.refresh();
             get().setAccessToken(newAccessToken);
 
-            if (!user) {
-                await fetchMe(); //nếu chưa có thông tin người dùng, gọi fetchMe để lấy thông tin
+            if (!get().user) {
+                await get().fetchMe();
             }
+
             return newAccessToken;
         } catch (error) {
             console.error("Làm mới access token thất bại:", error);
             toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
             return false;
         } finally {
-            set ({ loading: false });
+            set({ loading: false });
         }
-    }
+    },
+
+    initializeAuth: async () => {
+        if (get().initialized || get().loading) return;
+
+        try {
+            set({ loading: true });
+
+            const accessToken = await authService.refresh();
+            set({ accessToken });
+
+            const res = await authService.fetchMe();
+            const userData = normalizeUser(res.user ? res.user : res);
+            set({ user: userData });
+        } catch {
+            set({ accessToken: null, user: null });
+        } finally {
+            set({ loading: false, initialized: true });
+        }
+    },
 }));

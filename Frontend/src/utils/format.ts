@@ -38,3 +38,8 @@ export const formatRelativeTime = (dateStr: string): string => {
 
 export const truncate = (text: string, maxLength: number): string =>
     text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+
+export const calculateDiscountPercent = (price: number, originalPrice: number): number => {
+    if (!originalPrice || price >= originalPrice) return 0;
+    return Math.round(((originalPrice - price) / originalPrice) * 100);
+};

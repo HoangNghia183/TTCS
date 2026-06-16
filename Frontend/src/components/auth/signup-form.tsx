@@ -34,8 +34,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
     const { firstname, lastname, username, email, password } = data;
 
     await signUp(username, password, email, firstname, lastname);
-    // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
-    navigate("/signin");
+    // Chuyển hướng đến trang xác thực OTP sau khi đăng ký thành công
+    sessionStorage.setItem("registrationOtpEmail", email);
+    navigate(`/verify-email?email=${encodeURIComponent(email)}`);
   };
 
   return (

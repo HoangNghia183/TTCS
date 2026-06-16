@@ -1,78 +1,750 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
+import User from '../models/User.js';
+import Cart from '../models/Cart.js';
+import Coupon from '../models/Coupon.js';
+import moment from 'moment';
+import qs from 'qs';
+import crypto from 'crypto';
+import mongoose from 'mongoose';
+import vnpayConfig from '../config/vnpayConfig.js';
+import { isValidVietnamMobilePhone, normalizeVietnamPhone } from '../utils/vietnamPhone.js';
+
+const ORDER_STATUS_FLOW = ['Pending', 'Processing', 'Shipping', 'Delivered'];
+const CUSTOMER_CANCELLABLE_STATUSES = ['Pending', 'Processing'];
+const POINTS_PER_VND = 10000;
+const MEMBERSHIP_THRESHOLDS = [
+    { level: 'Đồng', min: 0 },
+    { level: 'Bạc', min: 100 },
+    { level: 'Vàng', min: 300 },
+    { level: 'Kim cương', min: 700 },
+];
+const ORDER_STATUS_NOTES = {
+    Created: 'Đơn hàng đã được tạo',
+    Pending: 'Chờ xác nhận',
+    Processing: 'Đơn hàng đang được xử lý',
+    Shipping: 'Đơn hàng đang được giao',
+    Delivered: 'Đơn hàng đã giao thành công',
+    CancelRequested: 'Khách hàng đã yêu cầu hủy đơn',
+    CancelRejected: 'Shop đã từ chối yêu cầu hủy đơn',
+    Cancelled: 'Đơn hàng đã bị hủy',
+};
+const VNPAY_CONFIG_ERROR = 'Thiếu cấu hình VNPay. Vui lòng kiểm tra VNP_TMN_CODE, VNP_HASH_SECRET và VNP_RETURN_URL.';
+const VNPAY_EXPECTED_RETURN_PATH = '/api/payment/vnpay_return';
+const VNPAY_EXPECTED_IPN_PATH = '/api/payment/vnpay_ipn';
+
+const buildFullAddress = ({ streetAddress, ward, district, province }) =>
+    [streetAddress, ward, district, province]
+        .map((part) => String(part || '').trim())
+        .filter(Boolean)
+        .join(', ');
+
+const SHIPPING_FEE = 30000;
+const FREE_SHIPPING_THRESHOLD = 500000;
+
+const normalizeSelectedCartProductIds = (value) => {
+    const ids = Array.isArray(value) ? value : [];
+    return [...new Set(
+        ids
+            .map((id) => String(id || '').trim())
+            .filter((id) => mongoose.isValidObjectId(id)),
+    )];
+};
+
+const buildOrderFromSelectedCartItems = async (userId, selectedCartItemIds = []) => {
+    const selectedIds = normalizeSelectedCartProductIds(selectedCartItemIds);
+
+    if (!selectedIds.length) {
+        return { error: 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.' };
+    }
+
+    const cart = await Cart.findOne({ user: userId }).populate('items.product');
+    const selectedSet = new Set(selectedIds);
+    const selectedCartItems = (cart?.items || []).filter((item) => {
+        const productId = item.product?._id?.toString?.() || item.product?.toString?.();
+        return productId && selectedSet.has(productId);
+    });
+
+    if (selectedCartItems.length !== selectedIds.length) {
+        return { error: 'Sản phẩm đã chọn không hợp lệ hoặc không thuộc giỏ hàng của bạn.' };
+    }
+
+    const orderItems = [];
+    for (const item of selectedCartItems) {
+        const product = item.product;
+        const quantity = Number(item.quantity);
+
+        if (!product) return { error: 'Không tìm thấy sản phẩm trong giỏ hàng.' };
+        if (!Number.isInteger(quantity) || quantity < 1) return { error: 'Số lượng sản phẩm không hợp lệ.' };
+        if (Number(product.stock || 0) < quantity) {
+            return { error: `Sản phẩm "${product.name}" không đủ hàng trong kho.` };
+        }
+
+        const image = Array.isArray(product.images) && product.images.length
+            ? product.images[0]
+            : product.image || '';
+
+        orderItems.push({
+            product: product._id,
+            name: product.name,
+            qty: quantity,
+            price: Number(product.price || 0),
+            image,
+        });
+    }
+
+    const itemsPrice = orderItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const shippingPrice = itemsPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+
+    return {
+        orderItems,
+        selectedCartProductIds: selectedCartItems.map((item) => item.product._id),
+        itemsPrice,
+        shippingPrice,
+    };
+};
+
+const calculateCouponDiscount = async (couponId, itemsPrice) => {
+    if (!couponId) return { discountAmount: 0 };
+    if (!mongoose.isValidObjectId(couponId)) return { error: 'Mã giảm giá không hợp lệ.' };
+
+    const coupon = await Coupon.findById(couponId);
+    if (!coupon) return { error: 'Mã giảm giá không tồn tại.' };
+    if (new Date() > coupon.expirationDate) return { error: 'Mã đã hết hạn.' };
+    if (itemsPrice < coupon.minOrderValue) return { error: `Đơn hàng tối thiểu phải là ${coupon.minOrderValue}đ.` };
+    if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
+        return { error: 'Mã đã hết lượt sử dụng.' };
+    }
+
+    const discountAmount = coupon.discountType === 'percent'
+        ? (itemsPrice * coupon.value) / 100
+        : coupon.value;
+
+    return {
+        coupon,
+        discountAmount: Math.min(Math.max(discountAmount, 0), itemsPrice),
+    };
+};
+
+const removePurchasedCartItems = async (userId, productIds = []) => {
+    const ids = normalizeSelectedCartProductIds(productIds);
+    if (!ids.length) return;
+
+    await Cart.updateOne(
+        { user: userId },
+        { $pull: { items: { product: { $in: ids.map(id => new mongoose.Types.ObjectId(id)) } } } },
+    );
+};
+
+const validateAndNormalizeShippingAddress = (shippingAddress = {}) => {
+    const fullName = String(shippingAddress.fullName || '').trim();
+    const rawPhone = String(shippingAddress.phone || '').trim();
+    const normalizedPhone = normalizeVietnamPhone(rawPhone);
+    const province = String(shippingAddress.province || shippingAddress.city || '').trim();
+    const district = String(shippingAddress.district || '').trim();
+    const ward = String(shippingAddress.ward || '').trim();
+    const streetAddress = String(shippingAddress.streetAddress || shippingAddress.address || '').trim();
+
+    if (!fullName) return { error: 'Vui lòng nhập họ và tên.' };
+    if (!rawPhone) return { error: 'Vui lòng nhập số điện thoại.' };
+    if (!/^\d+$/.test(normalizedPhone)) return { error: 'Số điện thoại không hợp lệ.' };
+    if (!isValidVietnamMobilePhone(rawPhone)) {
+        return { error: 'Số điện thoại phải là số di động Việt Nam hợp lệ.' };
+    }
+    if (!province) return { error: 'Vui lòng chọn Tỉnh/Thành phố.' };
+    if (!district) return { error: 'Vui lòng chọn Quận/Huyện.' };
+    if (!ward) return { error: 'Vui lòng chọn Phường/Xã.' };
+    if (!streetAddress) return { error: 'Vui lòng nhập địa chỉ cụ thể.' };
+
+    const fullAddress = buildFullAddress({ streetAddress, ward, district, province });
+
+    return {
+        value: {
+            fullName,
+            phone: normalizedPhone,
+            province,
+            district,
+            ward,
+            streetAddress,
+            fullAddress,
+            address: streetAddress,
+            city: province,
+        },
+    };
+};
+
+const getActorRole = (user) => user?.role || 'customer';
+
+const getActorId = (user) => user?._id || undefined;
+
+const appendStatusHistory = (order, { status, note, user, updatedAt = new Date() }) => {
+    const nextStatus = String(status || '').trim();
+    if (!nextStatus) return;
+
+    const nextNote = String(note || ORDER_STATUS_NOTES[nextStatus] || nextStatus).trim();
+    let history = [];
+    if (Array.isArray(order.statusHistory) && order.statusHistory.length > 0) {
+        history = order.statusHistory;
+    } else {
+        history = buildFallbackStatusHistory(order);
+    }
+    const last = history[history.length - 1];
+
+    if (
+        last
+        && last.status === nextStatus
+        && String(last.note || '') === nextNote
+    ) {
+        return;
+    }
+
+    order.statusHistory = history;
+    order.statusHistory.push({
+        status: nextStatus,
+        note: nextNote,
+        updatedAt,
+        updatedBy: getActorId(user),
+        updatedByRole: getActorRole(user),
+    });
+};
+
+const buildFallbackStatusHistory = (order) => {
+    const createdAt = order.createdAt || order._id?.getTimestamp?.() || new Date();
+    const history = [];
+
+    if (order.status === 'Cancelled') {
+        history.push({
+            status: 'Pending',
+            note: ORDER_STATUS_NOTES.Pending,
+            updatedAt: createdAt,
+            updatedByRole: 'system',
+        });
+        history.push({
+            status: 'Cancelled',
+            note: ORDER_STATUS_NOTES.Cancelled,
+            updatedAt: order.updatedAt || createdAt,
+            updatedByRole: 'admin',
+        });
+    } else {
+        const currentIndex = ORDER_STATUS_FLOW.indexOf(order.status);
+        if (currentIndex >= 0) {
+            for (let i = 0; i <= currentIndex; i++) {
+                const st = ORDER_STATUS_FLOW[i];
+                history.push({
+                    status: st,
+                    note: ORDER_STATUS_NOTES[st] || st,
+                    updatedAt: i === currentIndex ? (order.updatedAt || createdAt) : createdAt,
+                    updatedByRole: 'system',
+                });
+            }
+        } else {
+            history.push({
+                status: order.status || 'Pending',
+                note: ORDER_STATUS_NOTES[order.status] || order.status || ORDER_STATUS_NOTES.Pending,
+                updatedAt: order.updatedAt || createdAt,
+                updatedByRole: 'system',
+            });
+        }
+    }
+
+    if (order.cancelRequestedAt) {
+        history.push({
+            status: 'CancelRequested',
+            note: ORDER_STATUS_NOTES.CancelRequested,
+            updatedAt: order.cancelRequestedAt,
+            updatedBy: order.user?._id || order.user,
+            updatedByRole: 'customer',
+        });
+    }
+
+    if (order.cancelStatus === 'rejected' && order.cancelResolvedAt) {
+        history.push({
+            status: 'CancelRejected',
+            note: order.cancelRejectionReason
+                ? `${ORDER_STATUS_NOTES.CancelRejected}: ${order.cancelRejectionReason}`
+                : ORDER_STATUS_NOTES.CancelRejected,
+            updatedAt: order.cancelResolvedAt,
+            updatedByRole: 'admin',
+        });
+    }
+
+    if (order.status === 'Cancelled') {
+        history.push({
+            status: 'Cancelled',
+            note: ORDER_STATUS_NOTES.Cancelled,
+            updatedAt: order.cancelResolvedAt || order.updatedAt || createdAt,
+            updatedByRole: 'admin',
+        });
+    }
+
+    return history
+        .filter((item, index, items) => (
+            index === 0
+            || item.status !== items[index - 1].status
+            || item.note !== items[index - 1].note
+        ))
+        .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+};
+
+const sanitizeStatusHistory = (history = []) => history.map((item) => ({
+    status: item.status,
+    note: item.note,
+    updatedAt: item.updatedAt,
+    updatedBy: item.updatedBy,
+    updatedByRole: item.updatedByRole,
+}));
+
+const withStatusHistory = (order) => {
+    const orderObject = typeof order.toObject === 'function' ? order.toObject() : order;
+    const history = Array.isArray(orderObject.statusHistory) && orderObject.statusHistory.length
+        ? orderObject.statusHistory
+        : buildFallbackStatusHistory(orderObject);
+
+    return {
+        ...orderObject,
+        statusHistory: sanitizeStatusHistory(history),
+    };
+};
+
+const getMembershipLevel = (points = 0) => {
+    const safePoints = Math.max(Number(points) || 0, 0);
+    return [...MEMBERSHIP_THRESHOLDS].reverse().find((item) => safePoints >= item.min)?.level || 'Đồng';
+};
+
+const isPaymentEligibleForLoyalty = (order) => {
+    const paymentMethod = String(order.paymentMethod || '').toLowerCase();
+    return paymentMethod === 'cod' || order.isPaid === true;
+};
+
+const awardLoyaltyPointsIfEligible = async (order) => {
+    if (
+        order.status !== 'Delivered'
+        || order.loyaltyPointsAwarded
+        || order.status === 'Cancelled'
+        || !isPaymentEligibleForLoyalty(order)
+    ) {
+        return order;
+    }
+
+    const points = Math.floor(Number(order.totalPrice || 0) / POINTS_PER_VND);
+    if (points <= 0) return order;
+
+    const updatedUser = await User.findByIdAndUpdate(
+        order.user,
+        { $inc: { loyaltyPoints: points } },
+        { new: true },
+    ).select('loyaltyPoints membershipLevel');
+
+    if (updatedUser) {
+        updatedUser.membershipLevel = getMembershipLevel(updatedUser.loyaltyPoints);
+        await updatedUser.save({ validateBeforeSave: false });
+    }
+
+    order.loyaltyPointsAwarded = true;
+    order.loyaltyPoints = points;
+    order.loyaltyAwardedAt = new Date();
+
+    return order;
+};
+
+// Must match paymentController.js exactly — this is the VNPay-verified sort logic
+function sortObject(obj) {
+    const sorted = {};
+    const keys = Object.keys(obj).map(k => encodeURIComponent(k)).sort();
+    for (const key of keys) {
+        sorted[key] = encodeURIComponent(obj[decodeURIComponent(key)]).replace(/%20/g, '+');
+    }
+    return sorted;
+}
+
+function getUrlPath(url) {
+    try {
+        return new URL(url).pathname;
+    } catch {
+        return '';
+    }
+}
+
+function getVNPaySettings() {
+    const tmnCode = String(vnpayConfig.vnp_TmnCode || '').trim();
+    const hashSecret = String(vnpayConfig.vnp_HashSecret || '').trim();
+    const vnpUrl = String(vnpayConfig.vnp_Url || '').trim();
+    const returnUrl = String(vnpayConfig.vnp_ReturnUrl || '').trim();
+    const ipnUrl = String(vnpayConfig.vnp_IpnUrl || '').trim();
+
+    const returnPath = getUrlPath(returnUrl);
+    const ipnPath = ipnUrl ? getUrlPath(ipnUrl) : '';
+
+    if (!tmnCode || !hashSecret || !vnpUrl || !returnUrl || returnPath !== VNPAY_EXPECTED_RETURN_PATH || (ipnUrl && ipnPath !== VNPAY_EXPECTED_IPN_PATH)) {
+        const error = new Error(VNPAY_CONFIG_ERROR);
+        error.statusCode = 500;
+        throw error;
+    }
+
+    return { tmnCode, hashSecret, vnpUrl, returnUrl, ipnUrl };
+}
+
+function logVNPayDiagnostics({ vnpUrl, returnUrl, ipnUrl, params, paymentUrl }) {
+    if (process.env.NODE_ENV === 'production') return;
+
+    const safeUrl = new URL(paymentUrl);
+    safeUrl.searchParams.delete('vnp_SecureHash');
+
+    console.info('[VNPay:create-url]', {
+        tmnCodeExists: true,
+        vnpUrl,
+        returnUrl,
+        ipnUrl,
+        paramNames: Object.keys(params).sort(),
+        paymentUrlWithoutSecureHash: safeUrl.toString(),
+    });
+}
+
+// Helper: generate VNPay payment URL using real order ID
+function buildVNPayUrl(orderId, amount, ipAddr) {
+    const { tmnCode, hashSecret, vnpUrl, returnUrl, ipnUrl } = getVNPaySettings();
+
+    const now = moment().utcOffset('+07:00');
+    const createDate = now.format('YYYYMMDDHHmmss');
+    const expireDate = now.clone().add(15, 'minutes').format('YYYYMMDDHHmmss');
+    // txnRef must be unique per transaction; use last 8 chars of Mongo ObjectId
+    const txnRef = String(orderId).slice(-8).toUpperCase();
+    const rawIp = String(ipAddr || '127.0.0.1').split(',')[0].trim();
+
+    let vnp_Params = {};
+    vnp_Params['vnp_Version']   = '2.1.0';
+    vnp_Params['vnp_Command']   = 'pay';
+    vnp_Params['vnp_TmnCode']   = tmnCode;
+    vnp_Params['vnp_Locale']    = 'vn';
+    vnp_Params['vnp_CurrCode']  = 'VND';
+    vnp_Params['vnp_TxnRef']    = txnRef;
+    vnp_Params['vnp_OrderInfo'] = 'Thanh toan don hang:' + txnRef;
+    vnp_Params['vnp_OrderType'] = 'other';
+    vnp_Params['vnp_Amount']    = Math.round(Number(amount || 0) * 100);
+    vnp_Params['vnp_ReturnUrl'] = returnUrl;
+    vnp_Params['vnp_IpAddr']    = rawIp.replace(/^::ffff:/, '') || '127.0.0.1';
+    vnp_Params['vnp_CreateDate']= createDate;
+    vnp_Params['vnp_ExpireDate']= expireDate;
+
+    // Sort BEFORE hashing (VNPay requirement)
+    vnp_Params = sortObject(vnp_Params);
+
+    const signData = qs.stringify(vnp_Params, { encode: false });
+    const hmac     = crypto.createHmac('sha512', hashSecret);
+    const signed   = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+    vnp_Params['vnp_SecureHash'] = signed;
+    const paymentUrl = vnpUrl + '?' + qs.stringify(vnp_Params, { encode: false });
+    logVNPayDiagnostics({ vnpUrl, returnUrl, ipnUrl, params: vnp_Params, paymentUrl });
+
+    return paymentUrl;
+}
+
 
 // @desc    Tạo đơn hàng mới
 // @route   POST /api/orders
-export const addOrderItems = async (req, res) => {
+// Response (COD):    { ...order }
+// Response (VNPay):  { ...order, paymentUrl: string }
+export const addOrderItems = async (req, res, next) => {
     const {
-        orderItems,
+        selectedCartItemIds,
         shippingAddress,
         paymentMethod,
-        itemsPrice,
-        shippingPrice,
-        totalPrice,
+        coupon,
     } = req.body;
 
-    if (orderItems && orderItems.length === 0) {
+    if (!Array.isArray(selectedCartItemIds) || selectedCartItemIds.length === 0) {
         return res.status(400).json({ message: 'Giỏ hàng trống' });
-    } else {
-        try {
-            const order = new Order({
-                orderItems,
-                user: req.user._id,
-                shippingAddress,
-                paymentMethod,
-                itemsPrice,
-                shippingPrice,
-                totalPrice,
-            });
+    }
 
-            const createdOrder = await order.save();
-
-            // Trừ tồn kho (Stock)
-            for (const item of orderItems) {
-                const product = await Product.findById(item.product);
-                if (product) {
-                    product.stock = product.stock - item.qty;
-                    product.sold = (product.sold || 0) + item.qty; // Tăng số lượng đã bán
-                    await product.save();
-                }
-            }
-
-            res.status(201).json(createdOrder);
-        } catch (error) {
-            res.status(500).json({ message: error.message });
+    try {
+        const normalizedAddress = validateAndNormalizeShippingAddress(shippingAddress);
+        if (normalizedAddress.error) {
+            return res.status(400).json({ message: normalizedAddress.error });
         }
+
+        if (paymentMethod && paymentMethod.toLowerCase() === 'vnpay') {
+            getVNPaySettings();
+        }
+
+        const selectedCartOrder = await buildOrderFromSelectedCartItems(req.user._id, selectedCartItemIds);
+
+        if (selectedCartOrder?.error) {
+            return res.status(400).json({ message: selectedCartOrder.error });
+        }
+
+        const safeOrderItems = selectedCartOrder.orderItems;
+        const safeItemsPrice = selectedCartOrder.itemsPrice;
+        const safeShippingPrice = selectedCartOrder.shippingPrice;
+        const couponResult = await calculateCouponDiscount(coupon, safeItemsPrice);
+
+        if (couponResult.error) {
+            return res.status(400).json({ message: couponResult.error });
+        }
+
+        const safeDiscountAmount = couponResult.discountAmount;
+        const safeTotalPrice = Math.max(safeItemsPrice + safeShippingPrice - safeDiscountAmount, 0);
+
+        // 1. Save the order
+        const order = new Order({
+            orderItems: safeOrderItems,
+            selectedCartProductIds: selectedCartOrder.selectedCartProductIds,
+            user: req.user._id,
+            shippingAddress: normalizedAddress.value,
+            paymentMethod,
+            itemsPrice: safeItemsPrice,
+            shippingPrice: safeShippingPrice,
+            totalPrice: safeTotalPrice,
+            discountAmount: safeDiscountAmount || 0,
+            ...(coupon && { coupon }),
+        });
+        appendStatusHistory(order, {
+            status: 'Pending',
+            note: ORDER_STATUS_NOTES.Pending,
+            user: req.user,
+        });
+
+        const createdOrder = await order.save();
+
+        // 2. Decrement stock
+        for (const item of safeOrderItems) {
+            const product = await Product.findById(item.product);
+            if (product) {
+                product.stock = Math.max(0, product.stock - item.qty);
+                product.sold = (product.sold || 0) + item.qty;
+                await product.save();
+            }
+        }
+
+        await removePurchasedCartItems(req.user._id, selectedCartOrder.selectedCartProductIds);
+
+        // 3. If VNPay: generate payment URL and include it in response
+        if (paymentMethod && paymentMethod.toLowerCase() === 'vnpay') {
+            const ipAddr =
+                req.headers['x-forwarded-for'] ||
+                req.socket?.remoteAddress ||
+                req.connection?.remoteAddress ||
+                '127.0.0.1';
+
+            const paymentUrl = buildVNPayUrl(createdOrder._id, createdOrder.totalPrice, ipAddr);
+
+            return res.status(201).json({ ...withStatusHistory(createdOrder), paymentUrl });
+        }
+
+        // 4. COD: return order as-is
+        return res.status(201).json(withStatusHistory(createdOrder));
+
+    } catch (error) {
+        if (error?.message === VNPAY_CONFIG_ERROR) {
+            return res.status(error.statusCode || 500).json({ message: VNPAY_CONFIG_ERROR });
+        }
+
+        console.error('Create order error:', error);
+        next(error); // delegate to Express global error handler
     }
 };
 
 // @desc    Lấy đơn hàng của tôi
 // @route   GET /api/orders/myorders
-export const getMyOrders = async (req, res) => {
+export const getMyOrders = async (req, res, next) => {
     try {
         const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
-        res.json(orders);
+        res.json(orders.map(withStatusHistory));
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 // @desc    Lấy chi tiết đơn hàng
 // @route   GET /api/orders/:id
-export const getOrderById = async (req, res) => {
+// @desc    Admin get all orders
+// @route   GET /api/orders
+export const getOrders = async (req, res, next) => {
+    try {
+        const orders = await Order.find({})
+            .populate('user', 'username displayName email')
+            .sort({ createdAt: -1 });
+
+        res.json(orders.map(withStatusHistory));
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Admin update order status one step at a time
+// @route   PUT /api/orders/:id/status
+export const updateOrderStatus = async (req, res, next) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Khong tim thay don hang' });
+        }
+
+        if (!ORDER_STATUS_FLOW.includes(status)) {
+            return res.status(400).json({ message: 'Trang thai don hang khong hop le' });
+        }
+
+        if (order.status === 'Cancelled') {
+            return res.status(400).json({ message: 'Khong the cap nhat don hang da huy' });
+        }
+
+        if (order.cancelStatus === 'pending') {
+            return res.status(400).json({ message: 'Don hang dang co yeu cau huy, vui long xu ly yeu cau truoc' });
+        }
+
+        const currentIndex = ORDER_STATUS_FLOW.indexOf(order.status);
+        if (currentIndex === -1) {
+            return res.status(400).json({ message: 'Trang thai hien tai khong hop le' });
+        }
+
+        const nextStatus = ORDER_STATUS_FLOW[currentIndex + 1];
+
+        if (!nextStatus) {
+            return res.status(400).json({ message: 'Don hang da o trang thai cuoi' });
+        }
+
+        if (status !== nextStatus) {
+            return res.status(400).json({ message: `Chi co the chuyen sang trang thai ${nextStatus}` });
+        }
+
+        order.status = status;
+
+        if (status === 'Delivered') {
+            order.isDelivered = true;
+            order.deliveredAt = new Date();
+            
+            if (order.paymentMethod === 'COD' && !order.isPaid) {
+                order.isPaid = true;
+                order.paidAt = new Date();
+                order.paymentStatus = 'Paid';
+            }
+        }
+        await awardLoyaltyPointsIfEligible(order);
+        appendStatusHistory(order, {
+            status,
+            note: ORDER_STATUS_NOTES[status],
+            user: req.user,
+        });
+
+        const updatedOrder = await order.save();
+        res.json(withStatusHistory(updatedOrder));
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Customer request order cancellation
+// @route   POST /api/orders/:id/cancel-request
+export const requestOrderCancellation = async (req, res, next) => {
+    try {
+        const { reason } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+        }
+
+        if (!order.user.equals(req.user._id)) {
+            return res.status(403).json({ message: 'Bạn không có quyền hủy đơn hàng này.' });
+        }
+
+        if (!CUSTOMER_CANCELLABLE_STATUSES.includes(order.status)) {
+            return res.status(400).json({ message: 'Đơn hàng này không thể hủy ở trạng thái hiện tại.' });
+        }
+
+        if (order.cancelStatus === 'pending') {
+            return res.status(400).json({ message: 'Yêu cầu hủy đơn đã được gửi trước đó.' });
+        }
+
+        order.cancelRequested = true;
+        order.cancelReason = String(reason || '').trim();
+        order.cancelRequestedAt = new Date();
+        order.cancelStatus = 'pending';
+        order.cancelResolvedAt = undefined;
+        order.cancelRejectionReason = undefined;
+        appendStatusHistory(order, {
+            status: 'CancelRequested',
+            note: order.cancelReason
+                ? `${ORDER_STATUS_NOTES.CancelRequested}: ${order.cancelReason}`
+                : ORDER_STATUS_NOTES.CancelRequested,
+            user: req.user,
+            updatedAt: order.cancelRequestedAt,
+        });
+
+        const updatedOrder = await order.save();
+        res.status(200).json({
+            message: 'Yêu cầu hủy đơn đã được gửi.',
+            order: withStatusHistory(updatedOrder),
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Admin approve/reject cancellation request
+// @route   PUT /api/orders/:id/cancel-request
+export const resolveOrderCancellation = async (req, res, next) => {
+    try {
+        const { action, reason } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+        }
+
+        if (order.cancelStatus !== 'pending') {
+            return res.status(400).json({ message: 'Đơn hàng không có yêu cầu hủy đang chờ xử lý.' });
+        }
+
+        if (action === 'approve') {
+            order.status = 'Cancelled';
+            order.cancelRequested = false;
+            order.cancelStatus = 'approved';
+            order.cancelResolvedAt = new Date();
+            order.cancelRejectionReason = undefined;
+            appendStatusHistory(order, {
+                status: 'Cancelled',
+                note: ORDER_STATUS_NOTES.Cancelled,
+                user: req.user,
+                updatedAt: order.cancelResolvedAt,
+            });
+        } else if (action === 'reject') {
+            order.cancelRequested = false;
+            order.cancelStatus = 'rejected';
+            order.cancelResolvedAt = new Date();
+            order.cancelRejectionReason = String(reason || '').trim();
+            appendStatusHistory(order, {
+                status: 'CancelRejected',
+                note: order.cancelRejectionReason
+                    ? `${ORDER_STATUS_NOTES.CancelRejected}: ${order.cancelRejectionReason}`
+                    : ORDER_STATUS_NOTES.CancelRejected,
+                user: req.user,
+                updatedAt: order.cancelResolvedAt,
+            });
+        } else {
+            return res.status(400).json({ message: 'Hành động xử lý yêu cầu hủy không hợp lệ.' });
+        }
+
+        const updatedOrder = await order.save();
+        res.status(200).json(withStatusHistory(updatedOrder));
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getOrderById = async (req, res, next) => {
     try {
         const order = await Order.findById(req.params.id).populate('user', 'fullName email');
-        if (order) {
-            // Kiểm tra quyền: Chỉ Admin hoặc Chủ đơn hàng mới được xem
-            if(req.user.role === 'admin' || order.user._id.equals(req.user._id)){
-                res.json(order);
-            } else {
-                res.status(403).json({ message: 'Không có quyền xem đơn hàng này' });
-            }
-        } else {
-            res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+        if (!order) {
+            return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
         }
+        if (req.user.role === 'admin' || order.user._id.equals(req.user._id)) {
+            return res.json(withStatusHistory(order));
+        }
+        return res.status(403).json({ message: 'Không có quyền xem đơn hàng này' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };

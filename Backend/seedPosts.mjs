@@ -59,10 +59,15 @@ async function main() {
     await mongoose.connect(process.env.MONGODB_URL);
     console.log('✅ Connected to MongoDB');
 
-    const admin = await User.findOne({ role: 'admin' });
+    let admin = await User.findOne({ role: 'admin' });
     if (!admin) {
-        console.error('❌ No admin user found. Create an admin account first, then re-run.');
-        process.exit(1);
+        console.log('⚠️ No admin user found. Creating a dummy admin user for seeding...');
+        admin = await User.create({
+            username: 'admin',
+            email: 'admin@bookstore.com',
+            password: 'hashed_password_placeholder',
+            role: 'admin'
+        });
     }
 
     let created = 0;

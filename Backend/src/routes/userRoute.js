@@ -1,25 +1,51 @@
 import express from 'express';
-import { 
-    getUserProfile, 
-    updateUserProfile, 
-    getAllUsers, 
+import {
+    getUserProfile,
+    updateUserProfile,
+    updateUserAvatar,
+    changePassword,
+    getAllUsers,
+    createUser,
+    updateUser,
+    blockUser,
+    unblockUser,
     deleteUser,
-    test
-} from '../controllers/userController.js'; // Bạn nhớ tạo file userController nhé
+    test,
+} from '../controllers/userController.js';
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
-// User Routes
 router.route('/profile')
     .get(protectedRoute, getUserProfile)
     .put(protectedRoute, updateUserProfile);
 
-// Admin Routes
+router.put('/me/password', protectedRoute, changePassword);
+
+const uploadAvatar = (req, res, next) => {
+    upload.single('avatar')(req, res, (error) => {
+        if (!error) return next();
+
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB.' });
+        }
+
+        return res.status(400).json({ message: 'Vui lòng chọn tệp ảnh hợp lệ.' });
+    });
+};
+
+router.put('/me/avatar', protectedRoute, uploadAvatar, updateUserAvatar);
+
 router.route('/')
-    .get(protectedRoute, adminRoute, getAllUsers);
+    .get(protectedRoute, adminRoute, getAllUsers)
+    .post(protectedRoute, adminRoute, createUser);
+
+router.put('/:id/block', protectedRoute, adminRoute, blockUser);
+router.put('/:id/unblock', protectedRoute, adminRoute, unblockUser);
 
 router.route('/:id')
+    .put(protectedRoute, adminRoute, updateUser)
     .delete(protectedRoute, adminRoute, deleteUser);
 
 router.get('/test', test);

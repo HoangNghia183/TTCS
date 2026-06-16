@@ -42,6 +42,23 @@ const orderSchema = new mongoose.Schema({
         enum: ['Pending', 'Processing', 'Shipping', 'Delivered', 'Cancelled'],
         default: 'Pending'
     },
+    statusHistory: [{
+        status: { type: String, required: true },
+        note: { type: String },
+        updatedAt: { type: Date, default: Date.now },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        updatedByRole: { type: String, enum: ['customer', 'admin', 'system'], default: 'system' }
+    }],
+    cancelRequested: { type: Boolean, default: false },
+    cancelReason: { type: String },
+    cancelRequestedAt: { type: Date },
+    cancelStatus: { 
+        type: String, 
+        enum: ['none', 'pending', 'approved', 'rejected'],
+        default: 'none'
+    },
+    cancelResolvedAt: { type: Date },
+    cancelRejectionReason: { type: String },
     coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' }
 
 }, { timestamps: true });

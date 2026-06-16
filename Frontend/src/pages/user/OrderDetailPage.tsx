@@ -4,10 +4,10 @@ import Sidebar from "@/components/common/Sidebar";
 import { orderService } from "@/services/orderService";
 import type { Order } from "@/types/order";
 import { formatCurrency, formatDate } from "@/utils/format";
-import { ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS } from "@/utils/constants";
+import { ORDER_STATUS_LABELS } from "@/utils/constants";
 import Loading from "@/components/common/Loading";
 
-const STATUS_STEPS = ["pending", "confirmed", "shipping", "delivered"];
+const STATUS_STEPS = ["Pending", "Processing", "Shipping", "Delivered"];
 
 const OrderDetailPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -36,7 +36,7 @@ const OrderDetailPage = () => {
                 </div>
 
                 {/* Status tracker */}
-                {order.status !== "cancelled" && (
+                {order.status !== "Cancelled" && (
                     <div className="bg-white dark:bg-card rounded-2xl border border-border p-5 mb-5">
                         <div className="flex items-center justify-between">
                             {STATUS_STEPS.map((step, i) => (
@@ -61,22 +61,22 @@ const OrderDetailPage = () => {
                     <div className="lg:col-span-2 bg-white dark:bg-card rounded-2xl border border-border p-5">
                         <h2 className="font-bold mb-4" style={{ fontFamily: "'Nunito', sans-serif" }}>📦 Sản phẩm</h2>
                         <div className="flex flex-col gap-3">
-                            {order.items.map((item) => (
-                                <div key={item.productId} className="flex items-center gap-3">
-                                    <img src={item.productImage} alt={item.productName} className="w-14 h-14 rounded-xl object-cover border border-border" />
+                            {order.orderItems.map((item) => (
+                                <div key={item.product} className="flex items-center gap-3">
+                                    <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover border border-border" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-foreground line-clamp-1">{item.productName}</p>
-                                        <p className="text-xs text-muted-foreground">× {item.quantity}</p>
+                                        <Link to={`/product/${item.product}`} className="font-semibold text-foreground line-clamp-2 hover:text-[var(--pet-coral)] transition-colors">{item.name}</Link>
+                                        <p className="text-xs text-muted-foreground mt-0.5">SL: {item.qty} &bull; {formatCurrency(item.price)}</p>
                                     </div>
-                                    <p className="font-bold text-[var(--pet-coral)] text-sm shrink-0">{formatCurrency(item.price * item.quantity)}</p>
+                                    <p className="font-bold text-[var(--pet-coral)] text-sm shrink-0">{formatCurrency(item.price * item.qty)}</p>
                                 </div>
                             ))}
                         </div>
                         <div className="border-t border-border mt-4 pt-4 flex flex-col gap-1 text-sm">
-                            <div className="flex justify-between text-muted-foreground"><span>Phí ship</span><span>{formatCurrency(order.shippingFee)}</span></div>
-                            {order.discount > 0 && <div className="flex justify-between text-emerald-600"><span>Giảm giá</span><span>−{formatCurrency(order.discount)}</span></div>}
+                            <div className="flex justify-between text-muted-foreground"><span>Phí ship</span><span>{formatCurrency(order.shippingPrice)}</span></div>
+                            {order.discountAmount > 0 && <div className="flex justify-between text-emerald-600"><span>Giảm giá</span><span>-{formatCurrency(order.discountAmount)}</span></div>}
                             <div className="flex justify-between font-bold text-base border-t border-border pt-2">
-                                <span>Tổng cộng</span><span className="text-[var(--pet-coral)]">{formatCurrency(order.total)}</span>
+                                <span>Tổng cộng</span><span className="text-[var(--pet-coral)]">{formatCurrency(order.totalPrice)}</span>
                             </div>
                         </div>
                     </div>
@@ -92,7 +92,7 @@ const OrderDetailPage = () => {
                         <div className="bg-white dark:bg-card rounded-2xl border border-border p-5">
                             <h2 className="font-bold mb-3" style={{ fontFamily: "'Nunito', sans-serif" }}>Thanh toán</h2>
                             <p className="text-sm text-muted-foreground">Phương thức: <span className="text-foreground font-semibold">{order.paymentMethod.toUpperCase()}</span></p>
-                            <p className="text-sm text-muted-foreground">Trạng thái: <span className="text-foreground font-semibold">{PAYMENT_STATUS_LABELS[order.paymentStatus]}</span></p>
+                            <p className="text-sm text-muted-foreground">Trạng thái: <span className="text-foreground font-semibold">{(order.isPaid || order.status === 'Delivered') ? "Đã thanh toán" : "Chưa thanh toán"}</span></p>
                             <p className="text-sm text-muted-foreground">Ngày: <span className="text-foreground font-semibold">{formatDate(order.createdAt)}</span></p>
                         </div>
                     </div>

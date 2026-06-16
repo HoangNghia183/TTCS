@@ -1,17 +1,45 @@
 import type { CartItem as ICartItem } from "@/types/product";
 import { useCartStore } from "@/stores/useCartStore";
 import { formatCurrency } from "@/utils/format";
+import { toast } from "sonner";
 
 interface CartItemProps {
     item: ICartItem;
+    selected?: boolean;
+    onSelectChange?: (productId: string, selected: boolean) => void;
 }
 
-const CartItemComponent = ({ item }: CartItemProps) => {
+const CartItemComponent = ({ item, selected = false, onSelectChange }: CartItemProps) => {
     const { updateQty, removeItem } = useCartStore();
     const { product, quantity } = item;
 
+    const handleRemove = async () => {
+        try {
+            await removeItem(product.id);
+        } catch {
+            toast.error("Không thể xóa sản phẩm khỏi giỏ hàng.");
+        }
+    };
+
+    const handleUpdateQty = async (nextQuantity: number) => {
+        try {
+            await updateQty(product.id, nextQuantity);
+        } catch {
+            toast.error("Không thể cập nhật giỏ hàng.");
+        }
+    };
+
     return (
         <div className="flex items-start gap-4 p-4 bg-white dark:bg-card rounded-2xl border border-border shadow-sm">
+            <label className="pt-7 shrink-0" aria-label={`Chọn ${product.name}`}>
+                <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={(event) => onSelectChange?.(product.id, event.target.checked)}
+                    className="w-4 h-4 accent-[var(--pet-coral)] cursor-pointer"
+                />
+            </label>
+
             {/* Image */}
             <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-muted/30">
                 <img
@@ -37,7 +65,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
             <div className="flex flex-col items-end gap-2 shrink-0">
                 {/* Remove */}
                 <button
-                    onClick={() => removeItem(product.id)}
+                    onClick={handleRemove}
                     className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all"
                     aria-label="Xóa"
                 >
@@ -50,7 +78,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
                 {/* Qty stepper */}
                 <div className="flex items-center border border-border rounded-xl overflow-hidden">
                     <button
-                        onClick={() => updateQty(product.id, quantity - 1)}
+                        onClick={() => { void handleUpdateQty(quantity - 1); }}
                         className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted transition-all"
                     >
                         −
@@ -59,7 +87,7 @@ const CartItemComponent = ({ item }: CartItemProps) => {
                         {quantity}
                     </span>
                     <button
-                        onClick={() => updateQty(product.id, quantity + 1)}
+                        onClick={() => { void handleUpdateQty(quantity + 1); }}
                         className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted transition-all"
                     >
                         +

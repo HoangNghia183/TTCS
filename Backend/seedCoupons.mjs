@@ -39,7 +39,7 @@ const coupons = [
         usedCount: 847,
     },
     {
-        code: 'NEWPET15',
+        code: 'NEWBOOK15',
         discountType: 'percent',
         value: 15,
         minOrderValue: 200_000,
@@ -96,7 +96,7 @@ const coupons = [
     },
     // ── Category-specific (tracked by name convention, enforced by controller) ─
     {
-        code: 'PETFOOD10',
+        code: 'COMIC10',
         discountType: 'percent',
         value: 10,
         minOrderValue: 250_000,
@@ -148,6 +148,9 @@ const coupons = [
 async function main() {
     await mongoose.connect(process.env.MONGODB_URL);
     console.log('✅ Connected to MongoDB');
+
+    await Coupon.deleteMany({});
+    console.log('🗑️  Cleared old coupons.');
 
     let created = 0;
     let skipped = 0;

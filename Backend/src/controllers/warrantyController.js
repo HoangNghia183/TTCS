@@ -1,21 +1,44 @@
+import mongoose from 'mongoose';
 import WarrantyRequest from '../models/WarrantyRequest.js';
 import Order from '../models/Order.js';
 
 // @desc    Gửi yêu cầu bảo hành (User)
 // @route   POST /api/warranty
 export const createWarrantyRequest = async (req, res) => {
-    const { orderId, productId, reason, images } = req.body;
+    const { orderId, productName, issue, description } = req.body;
+    const reason = `${issue}: ${description}`;
 
     try {
-        // Kiểm tra xem đơn hàng có tồn tại và thuộc về user này không
-        const order = await Order.findOne({ _id: orderId, user: req.user._id });
-        if (!order) {
-            return res.status(404).json({ message: 'Không tìm thấy đơn hàng hoặc bạn không có quyền' });
+        let order;
+        if (mongoose.Types.ObjectId.isValid(orderId)) {
+            order = await Order.findOne({ _id: orderId, user: req.user._id }).populate('orderItems.product');
+        } else {
+            const shortCode = String(orderId).trim().toUpperCase();
+            if (shortCode.length === 8) {
+                const userOrders = await Order.find({ user: req.user._id }).populate('orderItems.product');
+                order = userOrders.find(o => o._id.toString().slice(-8).toUpperCase() === shortCode);
+            }
         }
+
+        if (!order) {
+            return res.status(404).json({ message: 'Không tìm thấy đơn hàng hoặc mã đơn hàng không hợp lệ.' });
+        }
+
+        // Tìm productId từ tên sản phẩm
+        const orderItem = order.orderItems.find(item => 
+            (item.product?.name && item.product.name.toLowerCase() === String(productName).toLowerCase()) ||
+            (item.name && item.name.toLowerCase() === String(productName).toLowerCase())
+        );
+
+        if (!orderItem) {
+            return res.status(400).json({ message: 'Sản phẩm không có trong đơn hàng này.' });
+        }
+
+        const productId = orderItem.product?._id || orderItem.product;
 
         // Kiểm tra xem đã có yêu cầu bảo hành nào cho sản phẩm này trong đơn hàng này chưa (tránh spam)
         const existingRequest = await WarrantyRequest.findOne({ 
-            order: orderId, 
+            order: order._id, 
             product: productId 
         });
 
@@ -23,12 +46,14 @@ export const createWarrantyRequest = async (req, res) => {
             return res.status(400).json({ message: 'Bạn đã gửi yêu cầu bảo hành cho sản phẩm này rồi.' });
         }
 
+        const uploadedImages = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
         const warrantyRequest = await WarrantyRequest.create({
             user: req.user._id,
-            order: orderId,
+            order: order._id,
             product: productId,
             reason,
-            images,
+            images: uploadedImages,
             status: 'Pending'
         });
 
@@ -56,8 +81,8 @@ export const getMyWarrantyRequests = async (req, res) => {
 export const getAllWarrantyRequests = async (req, res) => {
     try {
         const requests = await WarrantyRequest.find({})
-            .populate('user', 'fullName email phone')
-            .populate('product', 'name price')
+            .populate('user', 'displayName username email phone')
+            .populate('product', 'name price image')
             .sort({ createdAt: -1 });
         res.json(requests);
     } catch (error) {

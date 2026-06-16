@@ -4,11 +4,18 @@ export interface User {
     email: string;
     displayName: string;
     role?: 'customer' | 'admin' | 'staff';
+    avatar?: string;
     avatarUrl?: string;
+    photoURL?: string;
+    image?: string;
     bio?: string;
     phone?: string;
     address?: string;
     isBlocked?: boolean;
+    isEmailVerified?: boolean;
+    loyaltyPoints?: number;
+    membershipLevel?: "Đồng" | "Bạc" | "Vàng" | "Kim cương";
+    pointsToNextLevel?: number;
     createdAt?: string;
     updatedAt?: string;
 }

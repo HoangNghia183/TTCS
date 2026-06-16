@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useCartStore } from "@/stores/useCartStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import UserAvatar from "./UserAvatar";
 
 const Header = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -11,7 +12,12 @@ const Header = () => {
     const cartCount = useCartStore((s) => s.totalCount)();
     const { isDark, toggleDark } = useUIStore();
     const { user, signOut } = useAuthStore();
+    const { fetchCart } = useCartStore();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        fetchCart(user?._id || (user as any)?.id);
+    }, [user?._id, (user as any)?.id, fetchCart]);
 
     const navLinks = [
         { label: "Trang Chủ", to: "/" },
@@ -126,13 +132,7 @@ const Header = () => {
                                         className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-xl
                                hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                                     >
-                                        {user.avatarUrl ? (
-                                            <img src={user.avatarUrl} alt={user.displayName} className="w-8 h-8 rounded-full object-cover ring-2 ring-[var(--pet-coral)]/30" />
-                                        ) : (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--pet-coral)] to-[var(--pet-mint)] flex items-center justify-center text-white text-sm font-bold">
-                                                {(user.displayName || user.username)?.[0]?.toUpperCase()}
-                                            </div>
-                                        )}
+                                        <UserAvatar user={user} className="w-8 h-8" />
                                         <span className="text-sm font-semibold text-foreground">{user.displayName || user.username}</span>
                                         <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

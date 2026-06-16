@@ -106,10 +106,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     {product.name}
                 </h3>
 
-                {/* Breed & Age */}
+                {/* Author & Publisher */}
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <span>🏷️ {product.breed}</span>
-                    {product.age && <><span className="opacity-40">•</span><span>⏰ {product.age}</span></>}
+                    <span>🏷️ {product.author}</span>
+                    {product.publisher && <><span className="opacity-40">•</span><span>🏢 {product.publisher}</span></>}
                 </p>
 
                 {/* Rating */}

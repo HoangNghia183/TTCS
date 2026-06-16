@@ -1,37 +1,60 @@
-export type OrderStatus = "pending" | "confirmed" | "shipping" | "delivered" | "cancelled";
+export type OrderStatus = "Pending" | "Processing" | "Shipping" | "Delivered" | "Cancelled";
 export type PaymentMethod = "vnpay" | "cod";
-export type PaymentStatus = "unpaid" | "paid" | "refunded";
 
 export interface OrderItem {
-    productId: string;
-    productName: string;
-    productImage: string;
-    quantity: number;
+    product: string;
+    name: string;
+    qty: number;
     price: number;
+    image?: string;
+}
+
+export interface OrderStatusHistoryItem {
+    status: OrderStatus | "Created" | "CancelRequested" | "CancelRejected";
+    note?: string;
+    updatedAt?: string;
+    updatedBy?: string;
+    updatedByRole?: string;
 }
 
 export interface ShippingAddress {
     fullName: string;
-    phone: string;
     address: string;
     city: string;
+    phone: string;
     district: string;
+    province: string;
+    ward: string;
+    streetAddress: string;
+    fullAddress: string;
 }
 
 export interface Order {
     _id: string;
-    userId: string;
-    items: OrderItem[];
+    user: string;
+    orderItems: OrderItem[];
     shippingAddress: ShippingAddress;
-    subtotal: number;
-    discount: number;
-    shippingFee: number;
-    total: number;
-    couponCode?: string;
     paymentMethod: PaymentMethod;
-    paymentStatus: PaymentStatus;
+    itemsPrice: number;
+    shippingPrice: number;
+    discountAmount: number;
+    totalPrice: number;
+    isPaid: boolean;
+    paidAt?: string;
+    isDelivered: boolean;
+    deliveredAt?: string;
+    loyaltyPointsAwarded?: boolean;
+    loyaltyPoints?: number;
+    loyaltyAwardedAt?: string;
     status: OrderStatus;
-    note?: string;
+    cancelRequested?: boolean;
+    cancelReason?: string;
+    cancelRequestedAt?: string;
+    cancelStatus?: "none" | "pending" | "approved" | "rejected";
+    cancelResolvedAt?: string;
+    cancelRejectionReason?: string;
+    statusHistory?: OrderStatusHistoryItem[];
+    coupon?: string;
     createdAt: string;
     updatedAt: string;
 }

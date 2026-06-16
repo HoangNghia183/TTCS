@@ -11,20 +11,20 @@ export const warrantyService = {
     },
 
     getMyRequests: async (): Promise<WarrantyRequest[]> => {
-        const res = await api.get<ApiResponse<WarrantyRequest[]>>("/warranty/my");
-        return res.data.data;
+        const res = await api.get<ApiResponse<WarrantyRequest[]>>("/warranty/my-requests");
+        return res.data.data ? res.data.data : (res.data as any);
     },
 
     getAllRequests: async (): Promise<WarrantyRequest[]> => {
-        const res = await api.get<ApiResponse<WarrantyRequest[]>>("/warranty");
-        return res.data.data;
+        const res = await api.get<ApiResponse<WarrantyRequest[]>>("/warranty/admin");
+        return res.data.data ? res.data.data : (res.data as any);
     },
 
     updateStatus: async (id: string, status: WarrantyStatus, adminNote?: string): Promise<WarrantyRequest> => {
-        const res = await api.put<ApiResponse<WarrantyRequest>>(`/warranty/${id}`, {
+        const res = await api.put<ApiResponse<WarrantyRequest>>(`/warranty/admin/${id}`, {
             status,
             adminNote,
         });
-        return res.data.data;
+        return res.data.data ? res.data.data : (res.data as any);
     },
 };

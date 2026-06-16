@@ -2,6 +2,19 @@ import api from "@/lib/axios";
 
 //file này dùng để tương tác với các API liên quan đến xác thực người dùng như đăng ký, đăng nhập, đăng xuất và lấy thông tin người dùng hiện tại.
 
+export interface SignUpResponse {
+  message: string;
+  email: string;
+  requiresVerification: boolean;
+  expiresIn?: number;
+}
+
+export interface OtpResponse {
+  success: boolean;
+  message: string;
+  expiresIn?: number;
+}
+
 export const authService = {
   signUp: async (
     username: string,
@@ -9,13 +22,45 @@ export const authService = {
     email: string,
     firstname: string,
     lastname: string
-  ) => {
+  ): Promise<SignUpResponse> => {
     const response = await api.post("/auth/signup", {
       username,
       password,
       email,
       firstName: firstname,
       lastName: lastname
+    });
+    return response.data;
+  },
+
+  verifyEmail: async (email: string, code: string) => {
+    const response = await api.post("/auth/verify-email", { email, code });
+    return response.data;
+  },
+
+  resendVerificationCode: async (email: string) => {
+    const response = await api.post("/auth/resend-verification-code", { email });
+    return response.data;
+  },
+
+  forgotPassword: async (username: string, email: string): Promise<OtpResponse> => {
+    const response = await api.post("/auth/forgot-password", { username, email });
+    return response.data;
+  },
+
+  resetPassword: async (
+    username: string,
+    email: string,
+    code: string,
+    newPassword: string,
+    confirmNewPassword: string
+  ) => {
+    const response = await api.post("/auth/reset-password", {
+      username,
+      email,
+      code,
+      newPassword,
+      confirmNewPassword,
     });
     return response.data;
   },

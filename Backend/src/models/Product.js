@@ -38,7 +38,7 @@ const productSchema = new mongoose.Schema({
 });
 
 // --- 1. MIDDLEWARE TẠO SLUG TỰ ĐỘNG (HỖ TRỢ TIẾNG VIỆT) ---
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function() {
     if (this.isModified('name')) {
         // Chuyển tiếng Việt có dấu thành không dấu
         // VD: "Thức ăn cho Mèo" -> "thuc-an-cho-meo"
@@ -51,7 +51,6 @@ productSchema.pre('save', function(next) {
             .trim()
             .replace(/\s+/g, '-'); // Thay khoảng trắng bằng dấu gạch ngang
     }
-    next();
 });
 
 // --- 2. VIRTUAL POPULATE REVIEWS ---

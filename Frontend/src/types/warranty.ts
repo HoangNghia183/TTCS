@@ -1,17 +1,25 @@
-export type WarrantyStatus = "pending" | "processing" | "resolved" | "rejected";
+export type WarrantyStatus = "Pending" | "Approved" | "Rejected" | "Completed";
 
 export interface WarrantyRequest {
     _id: string;
-    userId: string;
-    username?: string;
-    orderId: string;
-    productId: string;
-    productName: string;
-    issue: string;
-    description: string;
+    user: {
+        _id: string;
+        displayName?: string;
+        username?: string;
+        email?: string;
+        phone?: string;
+    };
+    order: string;
+    product: {
+        _id: string;
+        name: string;
+        price?: number;
+        image?: string;
+    };
+    reason: string;
     images: string[];
     status: WarrantyStatus;
-    adminNote?: string;
+    adminResponse?: string;
     createdAt: string;
     updatedAt: string;
 }

@@ -32,11 +32,11 @@ export const ROUTES = {
 } as const;
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
-    pending: "Chờ xác nhận",
-    confirmed: "Đã xác nhận",
-    shipping: "Đang giao hàng",
-    delivered: "Đã giao",
-    cancelled: "Đã hủy",
+    Pending: "Chờ xác nhận",
+    Processing: "Đang xử lý",
+    Shipping: "Đang giao hàng",
+    Delivered: "Đã giao",
+    Cancelled: "Đã hủy",
 };
 
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
@@ -46,8 +46,14 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
 };
 
 export const WARRANTY_STATUS_LABELS: Record<string, string> = {
-    pending: "Chờ xử lý",
-    processing: "Đang xử lý",
-    resolved: "Đã giải quyết",
-    rejected: "Từ chối",
+    Pending: "Chờ xử lý",
+    Approved: "Đã duyệt",
+    Completed: "Đã hoàn thành",
+    Rejected: "Từ chối",
+};
+
+export const IMAGE_ASSETS = { 
+    logo: "/dummy.png", 
+    placeholder: "/dummy.png", 
+    placeholderSignUp: "/dummy.png" 
 };

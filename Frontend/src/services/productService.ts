@@ -1,7 +1,8 @@
 import api from "@/lib/axios";
-import type { Product, ProductBadge, ProductCategory } from "@/types/product";
+import type { Product, ProductBadge, ProductCategory, ProductReview } from "@/types/product";
 import type { PaginatedResponse } from "@/types/api";
 import { categoryService } from "@/services/categoryService";
+import { calculateDiscountPercent } from "@/utils/format";
 
 
 export interface ProductFilters {
@@ -19,9 +20,41 @@ export interface ReviewPayload {
     comment: string;
 }
 
+interface ReviewResponse {
+    message: string;
+    review: ProductReview;
+    averageRating: number;
+    reviewCount: number;
+}
+
+export interface ProductPayload {
+    name: string;
+    price: number;
+    description: string;
+    category: string;
+    stock: number;
+    images?: string[];
+    specifications?: Record<string, string>;
+}
+
+export interface ProductSuggestion {
+    id: string;
+    name: string;
+    slug?: string;
+    price: number;
+    originalPrice?: number;
+    image: string;
+    images: string[];
+    category: ProductCategory;
+    categoryName: string;
+    stock: number;
+    inStock: boolean;
+    rating: number;
+}
+
 // ── Adapter: normalise MongoDB document → frontend Product ─────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapProduct = (raw: any): Product => ({
+export const mapProduct = (raw: any): Product => ({
     id: raw._id ?? raw.id,
     name: raw.name ?? "",
     // breed & age live inside specifications (Map) if present
@@ -31,21 +64,50 @@ const mapProduct = (raw: any): Product => ({
     originalPrice: raw.originalPrice ?? undefined,
     // backend stores images as an array; take first one
     image: Array.isArray(raw.images) && raw.images.length > 0 ? raw.images[0] : (raw.image ?? ""),
+    images: Array.isArray(raw.images) ? raw.images : [],
     // category may be a populated object or a plain string/id
     category: (typeof raw.category === "object" && raw.category !== null
         ? (raw.category.slug ?? raw.category.name ?? "accessory")
         : (raw.category ?? "accessory")) as ProductCategory,
-    rating: raw.averageRating ?? raw.rating ?? 0,
+    categoryId: typeof raw.category === "object" && raw.category !== null
+        ? (raw.category._id ?? raw.category.id)
+        : raw.category,
+    rating: (raw.reviewCount && raw.reviewCount > 0) ? (raw.averageRating ?? raw.rating ?? 0) : 0,
     reviewCount: raw.reviewCount ?? 0,
     // derive badge: sale if discounted, hot if sold >200, new otherwise
-    badge: (raw.originalPrice && raw.originalPrice > raw.price
+    badge: (calculateDiscountPercent(raw.price, raw.originalPrice) >= 1
         ? "sale"
         : raw.sold > 200
             ? "hot"
             : raw.badge ?? undefined) as ProductBadge | undefined,
     description: raw.description ?? "",
     inStock: (raw.stock ?? 0) > 0,
+    stock: raw.stock ?? 0,
+    reviews: Array.isArray(raw.reviews) ? raw.reviews : [],
 });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mapProductSuggestion = (raw: any): ProductSuggestion => {
+    const category =
+        typeof raw.category === "object" && raw.category !== null
+            ? raw.category
+            : undefined;
+
+    return {
+        id: raw._id ?? raw.id,
+        name: raw.name ?? "",
+        slug: raw.slug ?? undefined,
+        price: raw.price ?? 0,
+        originalPrice: raw.originalPrice ?? undefined,
+        image: Array.isArray(raw.images) && raw.images.length > 0 ? raw.images[0] : (raw.image ?? ""),
+        images: Array.isArray(raw.images) ? raw.images : [],
+        category: (category?.slug ?? raw.category ?? "accessory") as ProductCategory,
+        categoryName: category?.name ?? category?.slug ?? "Sản phẩm",
+        stock: raw.stock ?? 0,
+        inStock: (raw.stock ?? 0) > 0,
+        rating: (raw.reviewCount && raw.reviewCount > 0) ? (raw.averageRating ?? raw.rating ?? 0) : 0,
+    };
+};
 
 // ── Backend response type (raw, before mapping) ────────────────────────────
 interface RawProductListResponse {
@@ -110,17 +172,46 @@ export const productService = {
         return mapProduct(res.data);
     },
 
-    create: async (data: FormData): Promise<Product> => {
-        const res = await api.post<RawSingleResponse>("/products", data, {
-            headers: { "Content-Type": "multipart/form-data" },
+    getFeatured: async (limit = 8): Promise<Product[]> => {
+        const params = new URLSearchParams({ limit: String(limit) });
+        const res = await api.get<{ products: unknown[] }>(`/products/featured?${params.toString()}`);
+        return (res.data.products ?? []).map(mapProduct);
+    },
+
+    getPersonalizedRecommendations: async (limit = 8): Promise<Product[]> => {
+        const params = new URLSearchParams({ limit: String(limit) });
+        const res = await api.get<{ products: unknown[] }>(`/products/recommendations/personalized?${params.toString()}`);
+        return (res.data.products ?? []).map(mapProduct);
+    },
+
+    getRecommendations: async (id: string, limit = 8): Promise<Product[]> => {
+        const params = new URLSearchParams({ limit: String(limit) });
+        const res = await api.get<{ products: unknown[] }>(`/products/${id}/recommendations?${params.toString()}`);
+        return (res.data.products ?? []).map(mapProduct);
+    },
+
+    getComboSuggestions: async (id: string, limit = 4): Promise<Product[]> => {
+        const params = new URLSearchParams({ limit: String(limit) });
+        const res = await api.get<{ products: unknown[] }>(`/products/${id}/combo-suggestions?${params.toString()}`);
+        return (res.data.products ?? []).map(mapProduct);
+    },
+
+    getSuggestions: async (query: string, limit = 6, signal?: AbortSignal): Promise<ProductSuggestion[]> => {
+        const params = new URLSearchParams({
+            q: query,
+            limit: String(limit),
         });
+        const res = await api.get<{ products: unknown[] }>(`/products/search/suggestions?${params.toString()}`, { signal });
+        return (res.data.products ?? []).map(mapProductSuggestion);
+    },
+
+    create: async (data: ProductPayload): Promise<Product> => {
+        const res = await api.post<RawSingleResponse>("/products", data);
         return mapProduct(res.data);
     },
 
-    update: async (id: string, data: FormData): Promise<Product> => {
-        const res = await api.put<RawSingleResponse>(`/products/${id}`, data, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
+    update: async (id: string, data: ProductPayload): Promise<Product> => {
+        const res = await api.put<RawSingleResponse>(`/products/${id}`, data);
         return mapProduct(res.data);
     },
 
@@ -128,7 +219,8 @@ export const productService = {
         await api.delete(`/products/${id}`);
     },
 
-    submitReview: async (productId: string, payload: ReviewPayload): Promise<void> => {
-        await api.post(`/products/${productId}/reviews`, payload);
+    submitReview: async (productId: string, payload: ReviewPayload): Promise<ReviewResponse> => {
+        const res = await api.post<ReviewResponse>(`/products/${productId}/reviews`, payload);
+        return res.data;
     },
 };
