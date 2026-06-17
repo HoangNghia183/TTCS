@@ -25,23 +25,18 @@ const PORT = process.env.PORT || 5001;
 
 const app = express();
 
-// --- Middlewares ---
-// 1. Xử lý CORS (Cho phép Frontend gọi API)
+
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true
 }));
 
-// 2. Xử lý JSON body
 app.use(express.json());
 
-// 3. Xử lý URL Encoded (Quan trọng cho VNPAY trả dữ liệu về)
+// Xử lý URL Encoded (Quan trọng cho VNPAY trả dữ liệu về)
 app.use(express.urlencoded({ extended: true }));
 
-// 4. Xử lý Cookies
 app.use(cookieParser());
-
-// --- Routes Definition ---
 
 // Auth & Users
 app.use('/api/auth', authRoutes);
@@ -55,7 +50,6 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/admin',adminRoutes);
 
-
 // Features & Content
 app.use('/api/ai', aiRoutes);
 app.use('/api/collection', collectionRoutes); // Yêu thích
@@ -65,10 +59,10 @@ app.use('/api/reviews', reviewRoutes);        // Đánh giá
 
 // Default Route (Kiểm tra server sống hay chết)
 app.get('/', (req, res) => {
-    res.send('PetShop API is running...');
+    res.send('bookShop API is running...');
 });
 
-// --- Global Error Handler (Bắt lỗi toàn app để không crash server) ---
+//Bắt lỗi toàn app để không crash server
 app.use((err, req, res, next) => {
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     res.status(statusCode);
@@ -78,8 +72,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// --- Connect DB & Start Server ---
-// Chỉ gọi connectDB một lần duy nhất
+// gọi connectDB
 connectDB().then(() => {
     app.listen(PORT, () => {
         console.log(`🚀 Server is running on port ${PORT}`);

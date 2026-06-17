@@ -2,9 +2,9 @@ import api from "@/lib/axios";
 import type { ApiResponse } from "@/types/api";
 
 export interface VNPayCreatePayload {
-    orderId: string;
+    // orderId: string;
     amount: number;
-    orderInfo?: string;
+    // orderInfo?: string;
 }
 
 export interface VNPayReturnParams {
@@ -15,8 +15,9 @@ export interface VNPayReturnParams {
 
 export const paymentService = {
     createVNPayUrl: async (payload: VNPayCreatePayload): Promise<string> => {
-        const res = await api.post<ApiResponse<{ payUrl: string }>>("/payment/vnpay/create", payload);
-        return res.data.data.payUrl;
+        const res = await api.post<{ paymentUrl: string }>("/payment/create_payment_url", payload);
+        console.log(res.data);
+        return res.data.paymentUrl;
     },
 
     verifyReturn: async (params: VNPayReturnParams): Promise<{ success: boolean; message: string; orderId: string }> => {

@@ -9,11 +9,11 @@ export interface ApplyCouponResult {
 
 export const couponService = {
     checkCoupon: async (code: string, orderTotal: number): Promise<ApplyCouponResult> => {
-        const res = await api.post<ApiResponse<ApplyCouponResult>>("/coupons/check", {
+        const res = await api.post<ApplyCouponResult>("/coupons/check", {
             code,
             orderTotal,
         });
-        return res.data.data;
+        return res.data;
     },
 
     getAllCoupons: async (): Promise<Coupon[]> => {
@@ -21,7 +21,7 @@ export const couponService = {
         return res.data.data;
     },
 
-    createCoupon: async (data: Omit<Coupon, "_id" | "usedCount" | "createdAt">): Promise<Coupon> => {
+    createCoupon: async (data: any): Promise<Coupon> => {
         const res = await api.post<ApiResponse<Coupon>>("/coupons", data);
         return res.data.data;
     },

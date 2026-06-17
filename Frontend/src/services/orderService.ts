@@ -16,7 +16,7 @@ export interface CreateOrderPayload {
 
 export const orderService = {
     createOrder: async (payload: CreateOrderPayload): Promise<Order> => {
-        console.log(payload)
+        // console.log(payload)
         const res = await api.post<ApiResponse<Order>>("/orders", payload);
         return res.data.data;
     },

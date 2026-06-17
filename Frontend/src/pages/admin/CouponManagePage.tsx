@@ -2,16 +2,31 @@ import { useEffect, useState } from "react";
 import { couponService } from "@/services/couponService";
 import type { Coupon } from "@/types/coupon";
 import DataTable, { type Column } from "@/components/features/admin/DataTable";
+import AddCouponModal from "@/components/features/admin/AddCouponModal";
 import { formatCurrency, formatDate } from "@/utils/format";
 import { toast } from "sonner";
 
 const CouponManagePage = () => {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
-        couponService.getAllCoupons().then().catch(console.error).finally(() => setLoading(false));
+        loadCoupons();
     }, []);
+
+    const loadCoupons = async () => {
+        try {
+            setLoading(true);
+            const data = await couponService.getAllCoupons();
+            setCoupons(data);
+        } catch (error) {
+            toast.error("Không thể tải danh sách mã giảm giá");
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleDelete = async (id: string) => {
         if (!confirm("Xóa mã giảm giá này?")) return;
@@ -35,7 +50,7 @@ const CouponManagePage = () => {
         {
             key: "discount", header: "Giảm giá", render: (c) => (
                 <span className="font-bold text-[var(--pet-coral)]">
-                    {c.discountType === "percent" ? `${c.discountValue}%` : formatCurrency(c.discountValue)}
+                    {c.discountType === "percent" ? `${c.value}%` : formatCurrency(c.value)}
                 </span>
             )
         },
@@ -55,11 +70,18 @@ const CouponManagePage = () => {
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <h1 className="section-title">🎟️ Mã Giảm Giá</h1>
-                <button className="btn-pet-primary">+ Tạo mã mới</button>
+                <button onClick={() => setShowModal(true)} className="btn-pet-primary">+ Tạo mã mới</button>
             </div>
             <DataTable columns={columns} data={coupons} keyExtractor={(c) => c._id} isLoading={loading} emptyText="Chưa có mã giảm giá nào."
                 actions={(c) => <button onClick={() => handleDelete(c._id)} className="text-xs px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-all font-semibold">Xóa</button>}
             />
+
+            {showModal && (
+                <AddCouponModal
+                    onClose={() => setShowModal(false)}
+                    onSuccess={loadCoupons}
+                />
+            )}
         </div>
     );
 };

@@ -74,13 +74,14 @@ const CheckoutPage = () => {
                 discountAmount: discount,
                 couponCode: couponCode || undefined,
             });
+            console.log(order);
             if (paymentMethod === "vnpay") {
                 const payUrl = await paymentService.createVNPayUrl({
-                    orderId: order._id,
-                    amount: order.totalPrice,
+                    // orderId: order._id,
+                    amount: total
                 });
-                clearCart();
-                window.location.href = payUrl;
+                window.open(payUrl, '_blank', 'noopener,noreferrer');
+                
             } else {
                 clearCart();
                 toast.success("Đặt hàng thành công! 🎉");

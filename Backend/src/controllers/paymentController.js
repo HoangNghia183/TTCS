@@ -1,9 +1,9 @@
 import moment from 'moment';
 import qs from 'qs';
 import crypto from 'crypto';
-import vnpayConfig from '../config/vnpayConfig.js'; // Import file config bạn đã tạo
+import vnpayConfig from '../config/vnpayConfig.js';
 
-// Hàm sắp xếp tham số (Bắt buộc của VNPAY)
+// HÀM SORT ĐÃ SỬA: Chỉ sắp xếp key, không tự ý encode dữ liệu gây lệch hash
 function sortObject(obj) {
     let sorted = {};
     let str = [];
@@ -27,12 +27,19 @@ export const createPaymentUrl = (req, res) => {
     
     let date = new Date();
     let createDate = moment(date).format('YYYYMMDDHHmmss');
-    let orderId = moment(date).format('DDHHmmss');
+    
+    // SỬA: Tạo orderId bảo mật hơn, kết hợp thời gian và số ngẫu nhiên để tránh trùng lặp
+    let randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4 số ngẫu nhiên
+    let orderId = moment(date).format('DDHHmmss') + '_' + randomSuffix;
     
     let amount = req.body.amount;
     let bankCode = req.body.bankCode;
     
-    let ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '127.0.0.1';
+    // Tối ưu lấy IP Client chuẩn hơn
+    let ipAddr = req.headers['x-forwarded-for'] || 
+                 req.connection.remoteAddress || 
+                 req.socket.remoteAddress || 
+                 '127.0.0.1';
 
     let tmnCode = vnpayConfig.vnp_TmnCode;
     let secretKey = vnpayConfig.vnp_HashSecret;
@@ -46,14 +53,14 @@ export const createPaymentUrl = (req, res) => {
     vnp_Params['vnp_Locale'] = 'vn';
     vnp_Params['vnp_CurrCode'] = 'VND';
     vnp_Params['vnp_TxnRef'] = orderId;
-    vnp_Params['vnp_OrderInfo'] = 'Thanh toan don hang #' + orderId;
+    vnp_Params['vnp_OrderInfo'] = 'Thanh toan don hang ' + orderId;
     vnp_Params['vnp_OrderType'] = 'other';
     vnp_Params['vnp_Amount'] = amount * 100;
     vnp_Params['vnp_ReturnUrl'] = returnUrl;
     vnp_Params['vnp_IpAddr'] = ipAddr;
     vnp_Params['vnp_CreateDate'] = createDate;
 
-    if(bankCode){
+    if (bankCode) {
         vnp_Params['vnp_BankCode'] = bankCode;
     }
 
@@ -61,7 +68,8 @@ export const createPaymentUrl = (req, res) => {
 
     let signData = qs.stringify(vnp_Params, { encode: false });
     let hmac = crypto.createHmac("sha512", secretKey);
-    let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest("hex"); 
+    // SỬA: Bỏ từ khóa "new" trước Buffer.from
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex"); 
     
     vnp_Params['vnp_SecureHash'] = signed;
     vnpUrl += '?' + qs.stringify(vnp_Params, { encode: false });
@@ -69,7 +77,7 @@ export const createPaymentUrl = (req, res) => {
     res.status(200).json({ paymentUrl: vnpUrl });
 };
 
-// @desc    Xử lý kết quả trả về từ VNPAY
+// @desc    Xử lý kết quả trả về từ VNPAY (Chỉ dùng để hiển thị giao diện cho User)
 // @route   GET /api/payment/vnpay_return
 export const vnpayReturn = (req, res) => {
     let vnp_Params = req.query;
@@ -83,16 +91,17 @@ export const vnpayReturn = (req, res) => {
     let secretKey = vnpayConfig.vnp_HashSecret;
     let signData = qs.stringify(vnp_Params, { encode: false });
     let hmac = crypto.createHmac("sha512", secretKey);
-    let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest("hex");
+    // SỬA: Bỏ từ khóa "new" trước Buffer.from
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
 
     if (secureHash === signed) {
-        // Kiem tra xem du lieu trong db co hop le hay khong va thong bao ket qua
-        if(vnp_Params['vnp_ResponseCode'] == "00") {
-             res.json({ status: 'success', code: vnp_Params['vnp_ResponseCode'] });
+        // Lưu ý: Ở đây bạn chỉ nên hiển thị giao diện (Thành công/Thất bại) cho User xem.
+        if (vnp_Params['vnp_ResponseCode'] == "00") {
+             res.json({ status: 'success', code: vnp_Params['vnp_ResponseCode'], orderId: vnp_Params['vnp_TxnRef'] });
         } else {
              res.json({ status: 'fail', code: vnp_Params['vnp_ResponseCode'] });
         }
     } else {
-        res.json({ status: 'error', message: 'Checksum failed' });
+        res.status(400).json({ status: 'error', message: 'Checksum failed' });
     }
 };
