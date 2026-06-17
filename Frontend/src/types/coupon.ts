@@ -3,6 +3,8 @@ export interface Coupon {
     code: string;
     discountType: "percent" | "fixed";
     value: number;
+    isActive:boolean;
+    discountValue:number;
     minOrderValue: number;
     expirationDate: string;
     usageLimit: number;

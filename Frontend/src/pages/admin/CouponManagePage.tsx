@@ -10,7 +10,7 @@ const CouponManagePage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        couponService.getAllCoupons().then(setCoupons).catch(console.error).finally(() => setLoading(false));
+        couponService.getAllCoupons().then().catch(console.error).finally(() => setLoading(false));
     }, []);
 
     const handleDelete = async (id: string) => {
@@ -35,13 +35,13 @@ const CouponManagePage = () => {
         {
             key: "discount", header: "Giảm giá", render: (c) => (
                 <span className="font-bold text-[var(--pet-coral)]">
-                    {c.discountType === "percentage" ? `${c.discountValue}%` : formatCurrency(c.discountValue)}
+                    {c.discountType === "percent" ? `${c.discountValue}%` : formatCurrency(c.discountValue)}
                 </span>
             )
         },
         { key: "min", header: "Đơn tối thiểu", render: (c) => formatCurrency(c.minOrderValue) },
         { key: "used", header: "Đã dùng", render: (c) => `${c.usedCount}/${c.usageLimit}` },
-        { key: "expires", header: "Hết hạn", render: (c) => formatDate(c.expiresAt) },
+        { key: "expires", header: "Hết hạn", render: (c) => formatDate(c.expirationDate) },
         {
             key: "status", header: "Trạng thái", render: (c) => (
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer transition-all ${c.isActive ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`} onClick={() => handleToggle(c)}>

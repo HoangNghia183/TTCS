@@ -15,6 +15,7 @@ interface Props {
 interface FormValues {
     name: string;
     price: string | number;
+    originalPrice: string | number;
     stock: string | number;
     category: string;
     newCategoryName?: string; // 1. Thêm trường này vào FormValues
@@ -30,7 +31,7 @@ const convert = (spec: Object) => {
     else return "";
 };
 
-const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props) => {
+const AddProductModal = ({ onClose, product = {} as Product, loadProducts }: Props) => {
     const [categoriesList, setCategoriesList] = useState<Category[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
@@ -38,6 +39,7 @@ const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props
         defaultValues: {
             name: product?.name ?? "",
             price: product.price ?? "",
+            originalPrice: product.originalPrice ?? "",
             stock: product.stock ?? "",
             category: product?.category?._id ?? "",
             newCategoryName: "",
@@ -94,11 +96,12 @@ const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props
                 }
             }
         });
+        // console.log(formData);
         if (!product?._id) {
             try {
                 setSubmitting(true);
                 await productService.create(formData);
-                toast.success(product ? "Cập nhật sản phẩm thành công" : "Tạo sản phẩm thành công");
+                toast.success("Tạo sản phẩm thành công");
                 loadProducts();
                 onClose();
             } catch (err) {
@@ -108,15 +111,16 @@ const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props
                 setSubmitting(false);
             }
         }
-        else{
+        else {
             try {
                 setSubmitting(true);
-                await productService.update(product._id,formData);
+                await productService.update(product._id, formData);
                 loadProducts();
+                toast.success("Cập nhật sản phẩm thành công");
                 onClose();
             } catch (error) {
                 console.log(error);
-            } finally{
+            } finally {
                 setSubmitting(false);
             }
         }
@@ -155,6 +159,14 @@ const AddProductModal = ({ onClose, product={} as Product, loadProducts }: Props
                     value={formValues.price}
                     className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+
+                {product?._id && <input
+                    {...register("originalPrice")}
+                    type="number"
+                    placeholder="Giá gốc"
+                    value={formValues.originalPrice}
+                    className="w-full p-2 rounded-lg border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />}
 
                 <input
                     {...register("stock")}

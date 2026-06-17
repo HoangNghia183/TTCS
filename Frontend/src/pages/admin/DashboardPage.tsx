@@ -34,7 +34,7 @@ const DashboardPage = () => {
         loadData();
     }, [])
     const loadOrder = async () => {
-        const res = await orderService.getAllOrders();
+        const res = await orderService.getAllOrders(1,8);
         await setOrderList(res.map(order=>{
             return {
                 id:order._id.substring(16),
@@ -56,10 +56,10 @@ const DashboardPage = () => {
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link to='revenue' ><StatCard label="Doanh thu tháng" value={formatCurrency(dashboard.revenue)} icon="💰" color="coral" trend={12} /></Link>
-                <Link to='orders'><StatCard label="Đơn hàng mới" value={dashboard.orderLen} icon="📦" color="mint" trend={5} /></Link>
-                <Link to='users'><StatCard label="Người dùng" value={dashboard.userLen} icon="👥" color="amber" trend={8} /></Link>
-                <Link to='products'><StatCard label="Sản phẩm" value={dashboard.bookLen} icon="📚" color="purple" trend={-2} /></Link>
+                <Link to='revenue' ><StatCard label="Doanh thu tháng" value={formatCurrency(dashboard.revenue)} icon="💰" color="coral" trend={dashboard.trend} /></Link>
+                <Link to='orders'><StatCard label="Đơn hàng mới" value={dashboard.orderLen} icon="📦" color="mint" /></Link>
+                <Link to='users'><StatCard label="Người dùng" value={dashboard.userLen} icon="👥" color="amber"  /></Link>
+                <Link to='products'><StatCard label="Sản phẩm" value={dashboard.bookLen} icon="📚" color="purple"  /></Link>
             </div>
             {/* Recent orders */}
             <div className="bg-white dark:bg-card rounded-2xl border border-border p-5">
