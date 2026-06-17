@@ -101,9 +101,17 @@ const OrderManagePage = () => {
         {
             key: "customer", header: "Khách hàng", render: (o) => (
                 <div className="max-w-64 text-sm">
-                    {o.shippingAddress.fullName && <p className="font-semibold text-foreground">{o.shippingAddress.fullName}</p>}
-                    <p className="text-foreground">{o.shippingAddress.phone}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{getShippingAddressText(o)}</p>
+                    {o.orderType === 'Ebook' ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-700">
+                            📱 eBook
+                        </span>
+                    ) : (
+                        <>
+                            {o.shippingAddress?.fullName && <p className="font-semibold text-foreground">{o.shippingAddress.fullName}</p>}
+                            <p className="text-foreground">{o.shippingAddress?.phone}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{getShippingAddressText(o)}</p>
+                        </>
+                    )}
                 </div>
             )
         },

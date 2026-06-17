@@ -14,8 +14,13 @@ import {
 } from '../controllers/productController.js';
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
 import { canReview } from '../middlewares/reviewMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
+
+const cpUpload = upload.fields([
+    { name: 'images', maxCount: 5 }
+]);
 
 // Public
 router.route('/').get(getProducts);
@@ -31,10 +36,10 @@ router.route('/:id/reviews').post(protectedRoute, canReview, createProductReview
 
 // Admin Only
 router.route('/')
-    .post(protectedRoute, adminRoute, createProduct);
+    .post(protectedRoute, adminRoute, cpUpload, createProduct);
 
 router.route('/:id')
-    .put(protectedRoute, adminRoute, updateProduct)
+    .put(protectedRoute, adminRoute, cpUpload, updateProduct)
     .delete(protectedRoute, adminRoute, deleteProduct);
 
 export default router;

@@ -42,23 +42,22 @@ const ProductFormModal = ({ isOpen, onClose, onSuccess }: ProductFormModalProps)
 
         setLoading(true);
         try {
-            const payload: any = {};
-            payload.name = name;
-            payload.category = categoryId;
-            payload.description = description;
-            payload.price = Number(price);
-            if (originalPrice) payload.originalPrice = Number(originalPrice);
-            payload.stock = Number(stock);
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("category", categoryId);
+            formData.append("description", description);
+            formData.append("price", price.toString());
+            if (originalPrice) formData.append("originalPrice", originalPrice.toString());
+            formData.append("stock", stock.toString());
             
-            // Map author back to specifications map
             const specifications = { author, publisher };
-            payload.specifications = specifications;
+            formData.append("specifications", JSON.stringify(specifications));
             
             if (image) {
-                payload.images = ["/dummy.png"]; // TODO: implement local upload
+                formData.append("images", image);
             }
 
-            await productService.create(payload);
+            await productService.create(formData as any);
             toast.success("Thêm sản phẩm thành công!");
             onSuccess();
             onClose();

@@ -1,4 +1,4 @@
-import moment from 'moment';
+﻿import moment from 'moment';
 import crypto from 'crypto';
 import vnpayConfig from '../config/vnpayConfig.js';
 import Order from '../models/Order.js';
@@ -150,13 +150,21 @@ async function markOrderPaidFromVNPay(order, queryParams) {
 
     order.isPaid = true;
     order.paidAt = new Date();
-    order.status = 'Processing';
+    if (order.orderType === 'Ebook') {
+        order.status = 'Delivered';
+        order.isDelivered = true;
+        order.deliveredAt = new Date();
+        appendPaymentStatusHistory(order, 'Delivered', 'Thanh toan VNPay thanh cong, giao eBook tu dong');
+    } else {
+        appendPaymentStatusHistory(order, 'Processing', 'Thanh toan VNPay thanh cong, don hang dang duoc xu ly');
+        appendPaymentStatusHistory(order, 'Processing', 'Thanh toán VNPay thành công, đơn hàng đang được xử lý');
+    }
+
     order.paymentResult = {
         id: queryParams['vnp_TransactionNo'],
         status: queryParams['vnp_ResponseCode'],
         update_time: queryParams['vnp_PayDate'],
     };
-    appendPaymentStatusHistory(order, 'Processing', 'Thanh toán VNPay thành công, đơn hàng đang được xử lý');
 
     const updatedOrder = await order.save();
 
@@ -349,7 +357,7 @@ export const vnpayIpn = async (req, res) => {
 
         // Payment failed / user cancelled
         order.status = 'Cancelled';
-        appendPaymentStatusHistory(order, 'Cancelled', 'Thanh toán VNPay không thành công, đơn hàng đã bị hủy');
+        appendPaymentStatusHistory(order, 'Cancelled', 'Thanh toan VNPay khong thanh cong, don hang da bi huy');
         await order.save();
         return res.status(200).json({ RspCode: '00', Message: 'Confirm Success' });
 

@@ -43,3 +43,11 @@ export const calculateDiscountPercent = (price: number, originalPrice: number): 
     if (!originalPrice || price >= originalPrice) return 0;
     return Math.round(((originalPrice - price) / originalPrice) * 100);
 };
+export const getImageUrl = (url: string | undefined): string => {
+    if (!url) return 'https://via.placeholder.com/300x400?text=No+Cover';
+    if (url.startsWith('http')) return url;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+    const baseUrl = apiUrl.replace('/api', '');
+    return baseUrl + url;
+};
+

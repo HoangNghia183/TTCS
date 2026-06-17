@@ -1,4 +1,4 @@
-import Order from '../models/Order.js';
+﻿import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Cart from '../models/Cart.js';
@@ -7,6 +7,7 @@ import moment from 'moment';
 import qs from 'qs';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+
 import vnpayConfig from '../config/vnpayConfig.js';
 import { isValidVietnamMobilePhone, normalizeVietnamPhone } from '../utils/vietnamPhone.js';
 
@@ -401,7 +402,7 @@ function logVNPayDiagnostics({ vnpUrl, returnUrl, ipnUrl, params, paymentUrl }) 
 }
 
 // Helper: generate VNPay payment URL using real order ID
-function buildVNPayUrl(orderId, amount, ipAddr) {
+function generateVNPayUrlForEbook(orderId, amount, ipAddr) {
     const { tmnCode, hashSecret, vnpUrl, returnUrl, ipnUrl } = getVNPaySettings();
 
     const now = moment().utcOffset('+07:00');
@@ -526,7 +527,7 @@ export const addOrderItems = async (req, res, next) => {
                 req.connection?.remoteAddress ||
                 '127.0.0.1';
 
-            const paymentUrl = buildVNPayUrl(createdOrder._id, createdOrder.totalPrice, ipAddr);
+            const paymentUrl = generateVNPayUrlForEbook(createdOrder._id, createdOrder.totalPrice, ipAddr);
 
             return res.status(201).json({ ...withStatusHistory(createdOrder), paymentUrl });
         }
@@ -744,6 +745,66 @@ export const getOrderById = async (req, res, next) => {
             return res.json(withStatusHistory(order));
         }
         return res.status(403).json({ message: 'Không có quyền xem đơn hàng này' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    T?o ��n h�ng eBook v� l?y link thanh to�n VNPay
+// @route   POST /api/orders/ebook
+export const createEbookOrder = async (req, res, next) => {
+    try {
+        const { ebookId } = req.body;
+        
+        if (!ebookId) {
+            return res.status(400).json({ message: 'ID eBook kh�ng h?p l?' });
+        }
+
+        const Ebook = (await import('../models/Ebook.js')).default;
+        const ebook = await Ebook.findById(ebookId);
+        
+        if (!ebook) {
+            return res.status(404).json({ message: 'Kh�ng t?m th?y eBook' });
+        }
+
+        const order = new Order({
+            user: req.user._id,
+            orderType: 'Ebook',
+            orderItems: [{
+                product: ebook._id,
+                itemModel: 'Ebook',
+                name: ebook.name,
+                qty: 1,
+                price: ebook.price,
+                image: ebook.images && ebook.images.length > 0 ? ebook.images[0] : ''
+            }],
+            paymentMethod: 'VNPAY',
+            itemsPrice: ebook.price,
+            shippingPrice: 0,
+            discountAmount: 0,
+            totalPrice: ebook.price,
+            status: 'Pending',
+            statusHistory: [{
+                status: 'Pending',
+                note: 'T?o ��n h�ng eBook',
+                updatedByRole: 'system'
+            }]
+        });
+
+        const createdOrder = await order.save();
+
+        const ipAddr = req.headers['x-forwarded-for'] ||
+            req.connection?.remoteAddress ||
+            req.socket?.remoteAddress ||
+            '127.0.0.1';
+
+        const paymentUrl = generateVNPayUrlForEbook(createdOrder._id, createdOrder.totalPrice, ipAddr);
+
+        res.status(201).json({
+            ...createdOrder.toObject(),
+            paymentUrl
+        });
+
     } catch (error) {
         next(error);
     }

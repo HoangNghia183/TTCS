@@ -39,7 +39,11 @@ const ReviewManagePage = () => {
         { 
             key: "product", 
             header: "Sản phẩm", 
-            render: (r) => <span className="font-semibold text-sm text-foreground">{r.product?.name || "Sản phẩm đã xóa"}</span> 
+            render: (r) => {
+                if (r.product) return <span className="font-semibold text-sm text-foreground">{r.product.name}</span>;
+                if (r.ebook) return <span className="font-semibold text-sm text-blue-600 dark:text-blue-400">[eBook] {r.ebook.name}</span>;
+                return <span className="font-semibold text-sm text-red-500 italic">Sản phẩm đã xóa</span>;
+            } 
         },
         { 
             key: "user", 

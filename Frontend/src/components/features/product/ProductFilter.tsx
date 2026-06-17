@@ -16,10 +16,9 @@ const SORT_OPTIONS = [
 
 const PRICE_PRESETS = [
     { label: "Tất cả", min: undefined, max: undefined },
-    { label: "< 500K", min: 0, max: 500_000 },
-    { label: "500K – 2M", min: 500_000, max: 2_000_000 },
-    { label: "2M – 10M", min: 2_000_000, max: 10_000_000 },
-    { label: "> 10M", min: 10_000_000, max: undefined },
+    { label: "< 50K", min: 0, max: 50_000 },
+    { label: "50K – 200K", min: 50_000, max: 200_000 },
+    { label: "> 200K", min: 200_000, max: undefined },
 ];
 
 // Placeholder entry for "all categories"

@@ -4,7 +4,7 @@ import { productService } from "@/services/productService";
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { formatCurrency } from "@/utils/format";
+import { formatCurrency, getImageUrl } from "@/utils/format";
 import ProductReviews from "@/components/features/product/ProductReviews";
 import ProductList from "@/components/features/product/ProductList";
 import { toast } from "sonner";
@@ -114,7 +114,7 @@ const ProductDetailPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
                 {/* Image */}
                 <div className="rounded-3xl overflow-hidden border border-border shadow-sm aspect-square">
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(product.image)} alt={product.name} className="w-full h-full object-cover" />
                 </div>
 
                 {/* Info */}
@@ -129,10 +129,10 @@ const ProductDetailPage = () => {
                         {product.name}
                     </h1>
 
-                    {product.author && (
-                        <p className="text-muted-foreground text-sm">
-                            📖 Tác giả: <strong>{product.author}</strong>
-                            {product.publisher && <> ⏳ NXB: <strong>{product.publisher}</strong></>}
+                    {(product.author || product.publisher) && (
+                        <p className="text-muted-foreground text-sm flex flex-wrap items-center gap-3">
+                            {product.author && <span>📖 Tác giả: <strong>{product.author}</strong></span>}
+                            {product.publisher && <span>🏢 NXB: <strong>{product.publisher}</strong></span>}
                         </p>
                     )}
 
@@ -202,12 +202,13 @@ const ProductDetailPage = () => {
 
             {/* Reviews */}
             <ProductReviews 
-                productId={product.id} 
+                itemId={product.id} 
                 reviews={product.reviews as any} 
-                averageRating={product.rating}
+                averageRating={product.averageRating}
                 onReviewAdded={() => {
                     productService.getById(product.id).then(setProduct).catch(() => {});
                 }}
+                onSubmit={productService.submitReview}
             />
 
             {/* Related products */}

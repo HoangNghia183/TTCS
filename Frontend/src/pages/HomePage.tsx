@@ -3,7 +3,10 @@ import { Link } from "react-router";
 // import { petCategories } from "@/types/product";
 import type { Product } from "@/types/product";
 import { productService } from "@/services/productService";
+import { ebookService } from "@/services/ebookService";
+import type { Ebook } from "@/services/ebookService";
 import ProductList from "@/components/features/product/ProductList";
+import EbookList from "@/components/features/ebook/EbookList";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 // ── Inline skeleton row for ProductList sections ──────────────────────────
@@ -28,18 +31,21 @@ const HomePage = () => {
   const [email, setEmail] = useState("");
 
   const [pets, setPets] = useState<Product[]>([]);
-  // const [accessories, setAccessories] = useState<Product[]>([]);
+  const [ebooks, setEbooks] = useState<Ebook[]>([]);
   const [petsLoading, setPetsLoading] = useState(true);
-  // const [accLoading, setAccLoading] = useState(true);
+  const [ebooksLoading, setEbooksLoading] = useState(true);
 
-  // Fetch featured pets and accessories concurrently on mount
+  // Fetch featured pets and ebooks concurrently on mount
   useEffect(() => {
     productService.getAll({ sort: "popular", limit: 8 })
       .then((res) => setPets(res.data.filter((p) => p.category !== "accessory")))
-      .catch(() => {/* silently fail — home page shows empty sections on error */ })
+      .catch(() => {/* silently fail */ })
       .finally(() => setPetsLoading(false));
 
-    // Accessories fetch removed
+    ebookService.getEbooks({ sort: "popular", limit: 8 })
+      .then((res) => setEbooks(res.data))
+      .catch(() => {/* silently fail */ })
+      .finally(() => setEbooksLoading(false));
   }, []);
 
   const features = [
@@ -170,6 +176,22 @@ const HomePage = () => {
             viewAllLink="/shop?type=books"
           />
         )}
+      </section>
+
+      {/* ============================================================ */}
+      {/*  3.5. EBOOKS YOU MIGHT LIKE                                    */}
+      {/* ============================================================ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {ebooksLoading ? (
+          <ProductRowSkeleton />
+        ) : ebooks.length > 0 ? (
+          <EbookList
+            ebooks={ebooks}
+            title="eBook Bạn Sẽ Thích 📱"
+            subtitle="Đọc sách mọi lúc mọi nơi trên mọi thiết bị"
+            viewAllLink="/ebook"
+          />
+        ) : null}
       </section>
 
       {/* ============================================================ */}

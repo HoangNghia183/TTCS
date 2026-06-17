@@ -15,20 +15,20 @@ const storage = multer.diskStorage({
 
 // Hàm kiểm tra định dạng file
 function checkFileType(file, cb) {
-    const filetypes = /jpg|jpeg|png|webp/; // Các đuôi cho phép
+    const filetypes = /jpg|jpeg|png|webp|pdf|epub/; // Các đuôi cho phép
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/pdf' || file.mimetype === 'application/epub+zip';
 
     if (extname && mimetype) {
         return cb(null, true);
     } else {
-        cb(new Error('Chỉ chấp nhận file ảnh (jpg, jpeg, png, webp)!'));
+        cb(new Error('Chỉ chấp nhận file ảnh, PDF và EPUB (jpg, jpeg, png, webp, pdf, epub)!'));
     }
 }
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn file 5MB
+    limits: { fileSize: 50 * 1024 * 1024 }, // Giới hạn file 50MB cho sách số
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
     },

@@ -60,6 +60,8 @@ export const mapProduct = (raw: any): Product => ({
     // breed & age live inside specifications (Map) if present
     breed: raw.specifications?.get?.("Giống") ?? raw.specifications?.Giống ?? (raw.breed ?? ""),
     age: raw.specifications?.get?.("Tuổi") ?? raw.specifications?.Tuổi ?? (raw.age ?? ""),
+    author: raw.specifications?.get?.("author") ?? raw.specifications?.author ?? (raw.author ?? ""),
+    publisher: raw.specifications?.get?.("publisher") ?? raw.specifications?.publisher ?? (raw.publisher ?? ""),
     price: raw.price ?? 0,
     originalPrice: raw.originalPrice ?? undefined,
     // backend stores images as an array; take first one
@@ -96,6 +98,8 @@ const mapProductSuggestion = (raw: any): ProductSuggestion => {
     return {
         id: raw._id ?? raw.id,
         name: raw.name ?? "",
+        author: raw.specifications?.get?.("author") ?? raw.specifications?.author ?? (raw.author ?? ""),
+        publisher: raw.specifications?.get?.("publisher") ?? raw.specifications?.publisher ?? (raw.publisher ?? ""),
         slug: raw.slug ?? undefined,
         price: raw.price ?? 0,
         originalPrice: raw.originalPrice ?? undefined,
@@ -205,13 +209,17 @@ export const productService = {
         return (res.data.products ?? []).map(mapProductSuggestion);
     },
 
-    create: async (data: ProductPayload): Promise<Product> => {
-        const res = await api.post<RawSingleResponse>("/products", data);
+    create: async (data: FormData): Promise<Product> => {
+        const res = await api.post<RawSingleResponse>("/products", data, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
         return mapProduct(res.data);
     },
 
-    update: async (id: string, data: ProductPayload): Promise<Product> => {
-        const res = await api.put<RawSingleResponse>(`/products/${id}`, data);
+    update: async (id: string, data: FormData): Promise<Product> => {
+        const res = await api.put<RawSingleResponse>(`/products/${id}`, data, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
         return mapProduct(res.data);
     },
 

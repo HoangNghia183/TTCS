@@ -7,8 +7,6 @@ import UserAvatar from "./UserAvatar";
 
 const Header = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
     const cartCount = useCartStore((s) => s.totalCount)();
     const { isDark, toggleDark } = useUIStore();
     const { user, signOut } = useAuthStore();
@@ -22,19 +20,14 @@ const Header = () => {
     const navLinks = [
         { label: "Trang Chủ", to: "/" },
         { label: "Cửa Hàng", to: "/shop" },
+        { label: "eBook", to: "/ebook" },
         { label: "Blog", to: "/blog" },
         { label: "Về Chúng Tôi", to: "/about" },
     ];
 
     const isAdmin = user?.role === "admin" || user?.role === "staff";
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
-            setSearchOpen(false);
-        }
-    };
+
 
     return (
         <header className="sticky top-0 z-50 w-full">
@@ -72,17 +65,7 @@ const Header = () => {
                         {/* ===== RIGHT ACTIONS ===== */}
                         <div className="flex items-center gap-1 md:gap-2">
 
-                            {/* Search button */}
-                            <button
-                                id="header-search-btn"
-                                onClick={() => setSearchOpen((p) => !p)}
-                                className="p-2.5 rounded-xl text-muted-foreground hover:text-[var(--pet-coral)] hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-                                aria-label="Tìm kiếm"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </button>
+
 
                             {/* Cart button */}
                             <Link
@@ -199,25 +182,6 @@ const Header = () => {
                         </div>
                     </div>
 
-                    {/* ===== SEARCH BAR (expanded) ===== */}
-                    {searchOpen && (
-                        <div className="pb-3 animate-fade-in-up">
-                            <form onSubmit={handleSearch} className="flex gap-2">
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    id="header-search-input"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Tìm theo tên sách, tác giả..."
-                                    className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-muted/50 text-sm
-                             focus:outline-none focus:ring-2 focus:ring-[var(--pet-coral)]/40 focus:border-[var(--pet-coral)]
-                             transition-all placeholder:text-muted-foreground"
-                                />
-                                <button type="submit" className="btn-pet-primary py-2 px-5 text-sm">Tìm</button>
-                            </form>
-                        </div>
-                    )}
                 </div>
 
                 {/* ===== MOBILE NAV ===== */}

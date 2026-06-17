@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { aiService, type ChatMessage } from "@/services/aiService";
+import ReactMarkdown from "react-markdown";
 
 const ChatWidget = () => {
     const [open, setOpen] = useState(false);
@@ -104,13 +105,25 @@ const ChatWidget = () => {
                         {messages.map((m, i) => (
                             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                 <div
-                                    className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm
+                                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm flex flex-col gap-2 prose prose-sm max-w-none
                                     ${m.role === "user"
-                                            ? "bg-[var(--pet-coral)] text-white"
+                                            ? "bg-[var(--pet-coral)] text-white prose-invert"
                                             : "bg-muted text-foreground"
                                         }`}
                                 >
-                                    {m.content}
+                                    <ReactMarkdown
+                                        components={{
+                                            a: ({ node, ...props }) => (
+                                                <a target="_blank" rel="noopener noreferrer" className="font-bold underline text-blue-500 hover:text-blue-600" {...props} />
+                                            ),
+                                            img: ({ node, ...props }) => (
+                                                <img className="max-w-full rounded-xl mt-1 shadow-sm border border-border/50 object-cover" {...props} />
+                                            ),
+                                            p: ({ node, ...props }) => <p className="mb-1 last:mb-0" {...props} />,
+                                        }}
+                                    >
+                                        {m.content}
+                                    </ReactMarkdown>
                                 </div>
                             </div>
                         ))}

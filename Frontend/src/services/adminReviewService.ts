@@ -2,7 +2,11 @@ import api from "@/lib/axios";
 
 export interface AdminReview {
     _id: string;
-    product: {
+    product?: {
+        _id: string;
+        name: string;
+    } | null;
+    ebook?: {
         _id: string;
         name: string;
     } | null;

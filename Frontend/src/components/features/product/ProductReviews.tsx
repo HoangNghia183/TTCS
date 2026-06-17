@@ -13,10 +13,11 @@ interface Review {
 }
 
 interface ProductReviewsProps {
-    productId: string;
+    itemId: string;
     reviews?: Review[];
     averageRating?: number;
     onReviewAdded?: () => void;
+    onSubmit: (itemId: string, data: { rating: number; comment: string }) => Promise<void>;
 }
 
 const StarPicker = ({ rating, onChange }: { rating: number; onChange: (r: number) => void }) => {
@@ -40,10 +41,11 @@ const StarPicker = ({ rating, onChange }: { rating: number; onChange: (r: number
 };
 
 const ProductReviews = ({
-    productId,
+    itemId,
     reviews = [],
     averageRating = 0,
     onReviewAdded,
+    onSubmit,
 }: ProductReviewsProps) => {
     const { user } = useAuthStore();
     const [rating, setRating] = useState(5);
@@ -55,7 +57,7 @@ const ProductReviews = ({
         if (!comment.trim()) return;
         setSubmitting(true);
         try {
-            await productService.submitReview(productId, { rating, comment: comment.trim() });
+            await onSubmit(itemId, { rating, comment: comment.trim() });
             toast.success("Cảm ơn đánh giá của bạn!");
             setComment("");
             setRating(5);

@@ -47,7 +47,7 @@ const ProductList = ({ products, title, subtitle, viewAllLink }: ProductListProp
                 {products.map((product, idx) => (
                     <div
                         key={product.id}
-                        className="animate-fade-in-up"
+                        className="animate-fade-in-up h-full"
                         style={{ animationDelay: `${idx * 0.07}s` }}
                     >
                         <ProductCard product={product} />

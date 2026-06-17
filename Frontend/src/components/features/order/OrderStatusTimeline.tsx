@@ -1,4 +1,4 @@
-import type { Order, OrderStatusHistoryItem } from "@/types/order";
+import type { Order, OrderStatus, OrderStatusHistoryItem } from "@/types/order";
 import { formatDate } from "@/utils/format";
 
 const TIMELINE_LABELS: Record<string, string> = {
@@ -19,6 +19,21 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ORDER_STATUS_FLOW = ["Pending", "Processing", "Shipping", "Delivered"];
+
+/**
+ * Always prefer the frontend-defined TIMELINE_LABELS for system-generated notes
+ * (avoids showing garbled/ASCII text stored in DB). Only show raw note for
+ * admin/customer roles where the text is custom (e.g. cancel reasons).
+ */
+const resolveNoteDisplay = (item: OrderStatusHistoryItem): string => {
+    const labelFromStatus = TIMELINE_LABELS[item.status];
+    // For system-generated entries: use the frontend label (always correct Vietnamese)
+    if (!item.updatedByRole || item.updatedByRole === 'system') {
+        return labelFromStatus || item.status;
+    }
+    // For admin/customer: prefer their custom note, else fall back to label
+    return item.note || labelFromStatus || item.status;
+};
 
 const buildFallbackTimeline = (order: Order): OrderStatusHistoryItem[] => {
     const createdAt = order.createdAt || order.updatedAt;
@@ -137,7 +152,7 @@ const OrderStatusTimeline = ({ order, compact = false }: OrderStatusTimelineProp
                             </span>
                             <div className="min-w-0">
                                 <p className="text-sm font-bold text-foreground">
-                                    {item.note || TIMELINE_LABELS[item.status] || item.status}
+                                    {resolveNoteDisplay(item)}
                                 </p>
                                 <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground mt-1">
                                     {item.updatedAt && <span>{formatDate(item.updatedAt)}</span>}

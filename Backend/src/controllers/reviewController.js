@@ -1,5 +1,20 @@
 import Review from '../models/Review.js';
 import Product from '../models/Product.js';
+import Ebook from '../models/Ebook.js';
+
+const recalculateEbookRating = async (ebookId) => {
+    const reviews = await Review.find({ ebook: ebookId });
+    await Ebook.findByIdAndUpdate(
+        ebookId,
+        {
+            reviewCount: reviews.length,
+            averageRating: reviews.length
+                ? reviews.reduce((acc, item) => acc + item.rating, 0) / reviews.length
+                : 0,
+        },
+        { runValidators: false },
+    );
+};
 
 const recalculateProductRating = async (productId) => {
     const reviews = await Review.find({ product: productId });
@@ -23,6 +38,7 @@ export const getAllReviews = async (req, res) => {
         const reviews = await Review.find({})
             .populate('user', 'displayName username email')
             .populate('product', 'name')
+            .populate('ebook', 'name')
             .sort({ createdAt: -1 }); // Mới nhất lên đầu
             
         res.json(reviews);
@@ -42,8 +58,10 @@ export const deleteReview = async (req, res) => {
         }
 
         const productId = review.product;
+        const ebookId = review.ebook;
         await review.deleteOne();
-        await recalculateProductRating(productId);
+        if (productId) await recalculateProductRating(productId);
+        if (ebookId) await recalculateEbookRating(ebookId);
 
         res.json({ message: 'Đã xóa đánh giá vi phạm' });
 

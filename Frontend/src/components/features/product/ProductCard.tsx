@@ -4,6 +4,7 @@ import type { Product } from "@/types/product";
 import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
+import { getImageUrl } from "@/utils/format";
 
 interface ProductCardProps {
     product: Product;
@@ -56,11 +57,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
     };
 
     return (
-        <article className="pet-card flex flex-col group">
+        <article className="pet-card flex flex-col group h-full">
             {/* ===== IMAGE ===== */}
             <div className="relative overflow-hidden aspect-square bg-muted/30">
                 <img
-                    src={product.image}
+                    src={getImageUrl(product.image)}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
@@ -107,10 +108,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 </h3>
 
                 {/* Author & Publisher */}
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <span>🏷️ {product.author}</span>
-                    {product.publisher && <><span className="opacity-40">•</span><span>🏢 {product.publisher}</span></>}
-                </p>
+                <div className="h-4 mb-1">
+                    {(product.author || product.publisher) && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 line-clamp-1">
+                            {product.author && <span className="truncate" title={product.author}>🏷️ {product.author}</span>}
+                            {product.publisher && <><span className="opacity-40 flex-shrink-0">•</span><span className="truncate" title={product.publisher}>🏢 {product.publisher}</span></>}
+                        </p>
+                    )}
+                </div>
 
                 {/* Rating */}
                 <StarRating rating={product.rating} reviewCount={product.reviewCount} />

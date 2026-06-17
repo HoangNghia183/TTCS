@@ -11,6 +11,7 @@ import AdminRoute from "@/routes/AdminRoute";
 // Eager load small pages
 import HomePage from "@/pages/HomePage";
 import ProductPage from "@/pages/shop/ProductPage";
+import EbookPage from "@/pages/shop/EbookPage";
 import SignInPage from "@/pages/SignInPage";
 import SignUpPage from "@/pages/SignUpPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
@@ -18,10 +19,12 @@ import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 
 // Lazy load heavier pages
 const ProductDetailPage = lazy(() => import("@/pages/shop/ProductDetailPage"));
+const EbookDetailPage = lazy(() => import("@/pages/shop/EbookDetailPage"));
 const CartPage = lazy(() => import("@/pages/shop/CartPage"));
 const CheckoutPage = lazy(() => import("@/pages/shop/CheckoutPage"));
 const PaymentResultPage = lazy(() => import("@/pages/payment/PaymentResultPage"));
 const ProfilePage = lazy(() => import("@/pages/user/ProfilePage"));
+const MyEbooksPage = lazy(() => import("@/pages/user/MyEbooksPage"));
 const OrderHistoryPage = lazy(() => import("@/pages/user/OrderHistoryPage"));
 const OrderDetailPage = lazy(() => import("@/pages/user/OrderDetailPage"));
 const WishlistPage = lazy(() => import("@/pages/user/WishlistPage"));
@@ -33,6 +36,7 @@ const DashboardPage = lazy(() => import("@/pages/admin/DashboardPage"));
 const OrderManagePage = lazy(() => import("@/pages/admin/OrderManagePage"));
 const UserManagePage = lazy(() => import("@/pages/admin/UserManagePage"));
 const ProductManagePage = lazy(() => import("@/pages/admin/ProductManagePage"));
+const EbookManagePage = lazy(() => import("@/pages/admin/EbookManagePage"));
 const CouponManagePage = lazy(() => import("@/pages/admin/CouponManagePage"));
 const ReviewManagePage = lazy(() => import("@/pages/admin/ReviewManagePage"));
 const WarrantyManagePage = lazy(() => import("@/pages/admin/WarrantyManagePage"));
@@ -47,7 +51,9 @@ const AppRoutes = () => (
         <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="shop" element={<ProductPage />} />
+            <Route path="ebook" element={<EbookPage />} />
             <Route path="product/:id" element={<SuspenseWrap><ProductDetailPage /></SuspenseWrap>} />
+            <Route path="ebook/:slug" element={<SuspenseWrap><EbookDetailPage /></SuspenseWrap>} />
             <Route path="about" element={<SuspenseWrap><AboutPage /></SuspenseWrap>} />
             <Route path="blog" element={<SuspenseWrap><BlogListPage /></SuspenseWrap>} />
             <Route path="blog/:slug" element={<SuspenseWrap><BlogDetailPage /></SuspenseWrap>} />
@@ -61,6 +67,7 @@ const AppRoutes = () => (
                 <Route path="orders" element={<SuspenseWrap><OrderHistoryPage /></SuspenseWrap>} />
                 <Route path="orders/:id" element={<SuspenseWrap><OrderDetailPage /></SuspenseWrap>} />
                 <Route path="profile" element={<SuspenseWrap><ProfilePage /></SuspenseWrap>} />
+                <Route path="my-ebooks" element={<SuspenseWrap><MyEbooksPage /></SuspenseWrap>} />
                 <Route path="wishlist" element={<SuspenseWrap><WishlistPage /></SuspenseWrap>} />
                 <Route path="warranty" element={<SuspenseWrap><WarrantyRequestPage /></SuspenseWrap>} />
             </Route>
@@ -84,6 +91,7 @@ const AppRoutes = () => (
                 <Route path="admin/orders" element={<SuspenseWrap><OrderManagePage /></SuspenseWrap>} />
                 <Route path="admin/users" element={<SuspenseWrap><UserManagePage /></SuspenseWrap>} />
                 <Route path="admin/products" element={<SuspenseWrap><ProductManagePage /></SuspenseWrap>} />
+                <Route path="admin/ebooks" element={<SuspenseWrap><EbookManagePage /></SuspenseWrap>} />
                 <Route path="admin/coupons" element={<SuspenseWrap><CouponManagePage /></SuspenseWrap>} />
                 <Route path="admin/reviews" element={<SuspenseWrap><ReviewManagePage /></SuspenseWrap>} />
                 <Route path="admin/warranty" element={<SuspenseWrap><WarrantyManagePage /></SuspenseWrap>} />

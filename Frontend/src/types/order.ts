@@ -3,6 +3,7 @@ export type PaymentMethod = "vnpay" | "cod";
 
 export interface OrderItem {
     product: string;
+    itemModel?: 'Product' | 'Ebook';
     name: string;
     qty: number;
     price: number;
@@ -32,6 +33,7 @@ export interface ShippingAddress {
 export interface Order {
     _id: string;
     user: string;
+    orderType?: 'Physical' | 'Ebook';
     orderItems: OrderItem[];
     shippingAddress: ShippingAddress;
     paymentMethod: PaymentMethod;

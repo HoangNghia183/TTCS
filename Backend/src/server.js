@@ -20,6 +20,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import newsletterRoutes from './routes/newsletterRoutes.js';
+import ebookRoutes from './routes/ebookRoutes.js';
 
 
 // Cấu hình
@@ -70,6 +71,7 @@ app.use('/api/reviews', reviewRoutes);        // Đánh giá
 app.use('/api/cart', cartRoutes);             // Giỏ hàng
 app.use('/api/admin', adminRoutes);           // Admin Dashboard
 app.use('/api/newsletter', newsletterRoutes); // Bản tin
+app.use('/api/ebooks', ebookRoutes);          // eBook
 
 // Default Route (Kiểm tra server sống hay chết)
 app.get('/', (req, res) => {

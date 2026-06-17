@@ -6,11 +6,22 @@ const orderSchema = new mongoose.Schema({
         ref: 'User', 
         required: true 
     },
+    orderType: {
+        type: String,
+        enum: ['Physical', 'Ebook'],
+        default: 'Physical'
+    },
     orderItems: [{
         product: { 
             type: mongoose.Schema.Types.ObjectId, 
-            ref: 'Product', 
+            refPath: 'orderItems.itemModel',
             required: true 
+        },
+        itemModel: {
+            type: String,
+            required: true,
+            enum: ['Product', 'Ebook'],
+            default: 'Product'
         },
         name: { type: String },
         qty: { type: Number, required: true },
@@ -18,9 +29,9 @@ const orderSchema = new mongoose.Schema({
         image: { type: String }
     }],
     shippingAddress: {
-        address: { type: String, required: true },
-        city: { type: String, required: true },
-        phone: { type: String, required: true }
+        address: { type: String, required: function() { return this.orderType !== 'Ebook'; } },
+        city: { type: String, required: function() { return this.orderType !== 'Ebook'; } },
+        phone: { type: String, required: function() { return this.orderType !== 'Ebook'; } }
     },
     paymentMethod: { type: String, required: true },
     paymentResult: {

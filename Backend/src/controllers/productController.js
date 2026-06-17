@@ -329,7 +329,7 @@ const getReviewSummary = async (productIds) => {
 
 const applyReviewSummary = (product, summaryMap) => {
     const productObject = typeof product.toObject === 'function'
-        ? product.toObject({ virtuals: true })
+        ? product.toObject({ virtuals: true, flattenMaps: true })
         : product;
     const summary = summaryMap.get(String(productObject._id)) || {
         reviewCount: 0,
@@ -797,7 +797,7 @@ export const getProductById = async (req, res) => {
         product.averageRating = averageRating;
         product.save({ validateBeforeSave: false }).catch(() => {});
 
-        const responseProduct = product.toObject({ virtuals: true });
+        const responseProduct = product.toObject({ virtuals: true, flattenMaps: true });
         responseProduct.reviewCount = reviewCount;
         responseProduct.averageRating = averageRating;
 
@@ -860,11 +860,16 @@ export const createProductReview = async (req, res) => {
 
 export const createProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock, images, specifications } = req.body;
+        const { name, price, description, category, stock, specifications } = req.body;
         const validationError = validateProductPayload({ name, price, description, category, stock });
 
         if (validationError) {
             return res.status(400).json({ message: validationError });
+        }
+
+        let images = [];
+        if (req.files && req.files['images']) {
+            images = req.files['images'].map(file => `/uploads/${file.filename}`);
         }
 
         const product = new Product({
@@ -873,7 +878,7 @@ export const createProduct = async (req, res) => {
             description: String(description).trim(),
             category,
             stock: Number(stock),
-            images: normalizeImages(images),
+            images: images,
             specifications: normalizeSpecifications(specifications),
         });
 
@@ -886,11 +891,24 @@ export const createProduct = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock, images, specifications } = req.body;
+        const { name, price, description, category, stock, specifications } = req.body;
         const product = await Product.findById(req.params.id);
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
+        }
+
+        let images = product.images || [];
+        if (req.files && req.files['images']) {
+            const newImages = req.files['images'].map(file => `/uploads/${file.filename}`);
+            images = [...images, ...newImages];
+        }
+
+        if (req.body.existingImages) {
+            const existingImages = Array.isArray(req.body.existingImages) ? req.body.existingImages : [req.body.existingImages];
+            images = req.files && req.files['images'] 
+                ? [...existingImages, ...req.files['images'].map(file => `/uploads/${file.filename}`)] 
+                : existingImages;
         }
 
         const nextProduct = {
@@ -899,6 +917,8 @@ export const updateProduct = async (req, res) => {
             description: description ?? product.description,
             category: category ?? product.category,
             stock: stock ?? product.stock,
+            images: images,
+            specifications: specifications ? normalizeSpecifications(specifications) : product.specifications,
         };
         const validationError = validateProductPayload(nextProduct);
 

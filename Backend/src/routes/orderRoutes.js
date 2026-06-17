@@ -7,6 +7,7 @@ import {
     updateOrderStatus,
     requestOrderCancellation,
     resolveOrderCancellation,
+    createEbookOrder,
 } from '../controllers/orderController.js';
 import { protectedRoute, adminRoute } from '../middlewares/authMiddleware.js';
 
@@ -17,6 +18,7 @@ router.route('/')
     .get(protectedRoute, adminRoute, getOrders);
 
 router.route('/myorders').get(protectedRoute, getMyOrders);
+router.route('/ebook').post(protectedRoute, createEbookOrder);
 router.route('/:id/cancel-request')
     .post(protectedRoute, requestOrderCancellation)
     .put(protectedRoute, adminRoute, resolveOrderCancellation);
