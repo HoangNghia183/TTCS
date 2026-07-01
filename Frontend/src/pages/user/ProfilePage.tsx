@@ -70,7 +70,7 @@ const ProfilePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8">
             <Sidebar mode="user" />
             <main className="flex-1 flex flex-col gap-6">
-                <h1 className="section-title">👤 Quản Lý Tài Khoản</h1>
+                <h1 className="section-title">Quản Lý Tài Khoản</h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Avatar & Quick Info */}
@@ -152,7 +152,7 @@ const ProfilePage = () => {
 
                         {/* Change password */}
                         <div className="bg-white dark:bg-card rounded-2xl border border-border p-6 shadow-sm">
-                            <h2 className="font-bold mb-4 text-lg border-b border-border pb-3 text-red-500" style={{ fontFamily: "'Nunito', sans-serif" }}>🔒 Đổi mật khẩu</h2>
+                            <h2 className="font-bold mb-4 text-lg border-b border-border pb-3 text-red-500" style={{ fontFamily: "'Nunito', sans-serif" }}>Đổi mật khẩu</h2>
                             <form onSubmit={handleChangePwd} className="flex flex-col gap-4 max-w-md">
                                 <div>
                                     <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wide">Mật khẩu hiện tại</label>

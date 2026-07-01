@@ -60,7 +60,7 @@ const WarrantyManagePage = () => {
 
     return (
         <div className="flex flex-col gap-6">
-            <h1 className="section-title">🛡️ Quản Lý Bảo Hành</h1>
+            <h1 className="section-title">Quản Lý Bảo Hành</h1>
             <DataTable columns={columns} data={requests} keyExtractor={(r) => r._id} isLoading={loading} emptyText="Không có yêu cầu bảo hành nào." />
             
             {selectedRequest && (
@@ -82,7 +82,7 @@ const WarrantyManagePage = () => {
                                     {selectedRequest.product?.image ? (
                                         <img src={selectedRequest.product.image} className="w-12 h-12 rounded-lg object-cover" />
                                     ) : (
-                                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-xl">📦</div>
+                                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-xl"></div>
                                     )}
                                     <div>
                                         <p className="text-sm font-bold text-foreground line-clamp-2">{selectedRequest.product?.name}</p>

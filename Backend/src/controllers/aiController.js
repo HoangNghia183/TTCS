@@ -25,7 +25,7 @@ export const chatWithAI = async (req, res) => {
             return img.startsWith('http') ? img : `${serverUrl}${img}`;
         };
 
-        // --- TÌM KIẾM SÁCH THƯỜNG ---
+        // Tìm kiếm sách thường
         const allProducts = await Product.find({ stock: { $gt: 0 } }).populate('category', 'name').select('_id name price slug images category');
         const scoredProducts = allProducts.map(p => {
             let score = 0;

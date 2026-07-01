@@ -282,7 +282,7 @@ const CheckoutPage = () => {
                             </div>
                         </div>
                         <button onClick={handleOrder} disabled={loading || checkoutItems.length === 0} className="btn-pet-primary w-full justify-center disabled:opacity-50">
-                            {loading ? "Đang xử lý..." : paymentMethod === "vnpay" ? "Thanh toán VNPAY →" : "Đặt hàng ngay 🐾"}
+                            {loading ? "Đang xử lý..." : paymentMethod === "vnpay" ? "Thanh toán VNPAY →" : "Đặt hàng ngay"}
                         </button>
                     </div>
                 </div>

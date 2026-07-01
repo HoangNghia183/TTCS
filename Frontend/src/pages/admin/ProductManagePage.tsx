@@ -63,7 +63,7 @@ const ProductManagePage = () => {
         },
         { key: "category", header: "Loại", render: (p) => <span className="badge-new capitalize">{p.category}</span> },
         { key: "price", header: "Giá", render: (p) => <span className="font-bold text-[var(--pet-coral)]">{formatCurrency(p.price)}</span> },
-        { key: "rating", header: "⭐", render: (p) => <span className="text-sm text-foreground">{p.rating.toFixed(1)} ({p.reviewCount})</span> },
+        { key: "rating", header: "Đánh giá", render: (p) => <span className="text-sm text-foreground">{p.rating.toFixed(1)} ({p.reviewCount})</span> },
         {
             key: "stock", header: "Tồn kho", render: (p) => (
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.inStock ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>

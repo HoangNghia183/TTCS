@@ -103,7 +103,7 @@ const OrderManagePage = () => {
                 <div className="max-w-64 text-sm">
                     {o.orderType === 'Ebook' ? (
                         <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-700">
-                            📱 eBook
+                            eBook
                         </span>
                     ) : (
                         <>
@@ -156,7 +156,7 @@ const OrderManagePage = () => {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-                <h1 className="section-title">📦 Quản Lý Đơn Hàng</h1>
+                <h1 className="section-title">Quản Lý Đơn Hàng</h1>
                 <select value={filter} onChange={(e) => setFilter(e.target.value)}
                     className="px-3 py-2 rounded-xl border border-border bg-white dark:bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pet-coral)]/40">
                     <option value="all">Tất cả trạng thái</option>

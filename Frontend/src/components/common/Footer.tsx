@@ -78,13 +78,13 @@ const Footer = () => {
                             Mang tri thức về nhà. Nhà sách trực tuyến uy tín nhất Việt Nam.
                         </p>
                         <div className="flex items-center gap-1.5 text-sm text-white/60">
-                            <span>📞</span> 1800-BOOKSTORE
+                            1800-BOOKSTORE
                         </div>
                         <div className="flex items-center gap-1.5 text-sm text-white/60">
-                            <span>📧</span> hello@bookstore.vn
+                            hello@bookstore.vn
                         </div>
                         <div className="flex items-center gap-1.5 text-sm text-white/60">
-                            <span>📍</span> TP. Hà Nội, VN
+                            TP. Hà Nội, VN
                         </div>
                     </div>
 
@@ -164,7 +164,7 @@ const Footer = () => {
                 {/* Bottom bar */}
                 <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <p className="text-xs text-white/40">
-                        © {year} BookStore. Bảo lưu mọi quyền. 📚 Made with ❤️ for books.
+                        © {year} BookStore. Bảo lưu mọi quyền. Made for books.
                     </p>
                     <div className="flex items-center gap-3">
                         <Link to="/privacy" className="text-xs text-white/40 hover:text-white/80 transition-colors">Bảo mật</Link>

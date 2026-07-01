@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import type { Product } from "@/types/product";
 import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useWishlistStore } from "@/stores/useWishlistStore";
 import { toast } from "sonner";
 import { getImageUrl } from "@/utils/format";
 
@@ -43,7 +44,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
     const { user } = useAuthStore();
     const navigate = useNavigate();
     const [added, setAdded] = useState(false);
-    const [wishlisted, setWishlisted] = useState(false);
+    const { toggleWishlist, isWishlisted } = useWishlistStore();
+    const wishlisted = isWishlisted(product.id);
+
+    const handleWishlistToggle = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!user) {
+            toast.error("Vui lòng đăng nhập để thêm vào yêu thích!");
+            navigate("/signin");
+            return;
+        }
+        await toggleWishlist(product);
+    };
 
     const handleAddToCart = () => {
         if (!user) {
@@ -76,7 +89,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
                 {/* Wishlist */}
                 <button
-                    onClick={() => setWishlisted((p) => !p)}
+                    onClick={handleWishlistToggle}
                     aria-label="Yêu thích"
                     className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center
                      transition-all duration-200 hover:scale-110
@@ -126,12 +139,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     <span className="text-lg font-extrabold text-[var(--pet-coral)]">
                         {formatPrice(product.price)}
                     </span>
-                    {product.originalPrice && (
+                    {product.originalPrice && product.originalPrice > product.price && (
                         <span className="text-xs text-muted-foreground line-through">
                             {formatPrice(product.originalPrice)}
                         </span>
                     )}
-                    {product.originalPrice && (
+                    {product.originalPrice && product.originalPrice > product.price && (
                         <span className="text-xs font-semibold text-emerald-600 ml-auto">
                             -{Math.round((1 - product.price / product.originalPrice) * 100)}%
                         </span>

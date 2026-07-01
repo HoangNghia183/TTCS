@@ -52,7 +52,7 @@ const ReviewManagePage = () => {
         },
         { 
             key: "rating", 
-            header: "⭐", 
+            header: "Đánh giá", 
             render: (r) => <span className="font-bold text-amber-500">{r.rating}/5</span> 
         },
         { 
@@ -69,7 +69,7 @@ const ReviewManagePage = () => {
 
     return (
         <div className="flex flex-col gap-6">
-            <h1 className="section-title">⭐ Kiểm Duyệt Đánh Giá</h1>
+            <h1 className="section-title">Kiểm Duyệt Đánh Giá</h1>
             {loading ? (
                 <div className="animate-pulse flex flex-col gap-3">
                     {Array.from({ length: 6 }).map((_, i) => (

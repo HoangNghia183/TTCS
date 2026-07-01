@@ -27,10 +27,10 @@ const OrderHistoryPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
             <Sidebar mode="user" />
             <main className="flex-1">
-                <h1 className="section-title mb-6">📦 Đơn Hàng Của Tôi</h1>
+                <h1 className="section-title mb-6">Đơn Hàng Của Tôi</h1>
                 {loading ? <Loading /> : orders.length === 0 ? (
                     <div className="text-center py-16">
-                        <div className="text-5xl mb-3">📦</div>
+
                         <p className="text-muted-foreground">Bạn chưa có đơn hàng nào.</p>
                         <Link to="/shop" className="btn-pet-primary mt-4 inline-flex">Mua sắm ngay</Link>
                     </div>

@@ -6,22 +6,22 @@ interface SidebarProps {
 }
 
 const adminLinks = [
-    { to: "/admin", label: "Tổng quan", emoji: "📊", end: true },
-    { to: "/admin/products", label: "Sản phẩm", emoji: "📚" },
-    { to: "/admin/ebooks", label: "Quản lý eBook", emoji: "📱" },
-    { to: "/admin/orders", label: "Đơn hàng", emoji: "📦" },
-    { to: "/admin/users", label: "Người dùng", emoji: "👥" },
-    { to: "/admin/coupons", label: "Mã giảm giá", emoji: "🎟️" },
-    { to: "/admin/reviews", label: "Đánh giá", emoji: "⭐" },
-    { to: "/admin/warranty", label: "Bảo hành", emoji: "🛡️" },
+    { to: "/admin", label: "Tổng quan", end: true },
+    { to: "/admin/products", label: "Sản phẩm" },
+    { to: "/admin/ebooks", label: "Quản lý eBook" },
+    { to: "/admin/orders", label: "Đơn hàng" },
+    { to: "/admin/users", label: "Người dùng" },
+    { to: "/admin/coupons", label: "Mã giảm giá" },
+    { to: "/admin/reviews", label: "Đánh giá" },
+    { to: "/admin/warranty", label: "Bảo hành" },
 ];
 
 const userLinks = [
-    { to: "/profile", label: "Tài khoản", emoji: "👤", end: true },
-    { to: "/orders", label: "Đơn hàng", emoji: "📦" },
-    { to: "/my-ebooks", label: "eBook của tôi", emoji: "📱" },
-    { to: "/wishlist", label: "Yêu thích", emoji: "❤️" },
-    { to: "/warranty", label: "Bảo hành", emoji: "🛡️" },
+    { to: "/profile", label: "Tài khoản", end: true },
+    { to: "/orders", label: "Đơn hàng" },
+    { to: "/my-ebooks", label: "eBook của tôi" },
+    { to: "/wishlist", label: "Yêu thích" },
+    { to: "/warranty", label: "Bảo hành" },
 ];
 
 const Sidebar = ({ mode = "user" }: SidebarProps) => {
@@ -62,7 +62,6 @@ const Sidebar = ({ mode = "user" }: SidebarProps) => {
                                 }`
                             }
                         >
-                            <span className="text-base">{link.emoji}</span>
                             {link.label}
                         </NavLink>
                     ))}

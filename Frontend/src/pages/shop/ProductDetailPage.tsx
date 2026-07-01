@@ -151,7 +151,7 @@ const ProductDetailPage = () => {
                     {/* Price */}
                     <div className="flex items-baseline gap-3">
                         <span className="text-3xl font-black text-[var(--pet-coral)]">{formatCurrency(product.price)}</span>
-                        {product.originalPrice && (
+                        {product.originalPrice && product.originalPrice > product.price && (
                             <span className="text-lg text-muted-foreground line-through">{formatCurrency(product.originalPrice)}</span>
                         )}
                         {discount > 0 && (
@@ -183,16 +183,15 @@ const ProductDetailPage = () => {
                                 onClick={handleAdd}
                                 className={`btn-pet-primary flex-1 justify-center transition-all ${added ? "bg-emerald-500" : ""}`}
                             >
-                                {added ? "✓ Đã thêm!" : "🛒 Thêm vào giỏ"}
+                                {added ? "Đã thêm!" : "Thêm vào giỏ"}
                             </button>
                         </div>
                     )}
 
                     {/* Features */}
                     <div className="grid grid-cols-3 gap-3 mt-2">
-                        {[["🚚", "Giao hàng 24h"], ["🛡️", "Bảo hành sách"], ["📚", "Bản quyền 100%"]].map(([icon, text]) => (
+                        {["Giao hàng 24h", "Bảo hành sách", "Bản quyền 100%"].map((text) => (
                             <div key={text} className="flex flex-col items-center gap-1 p-3 bg-muted/30 rounded-2xl text-center">
-                                <span className="text-xl">{icon}</span>
                                 <span className="text-xs text-muted-foreground font-medium">{text}</span>
                             </div>
                         ))}
@@ -204,7 +203,7 @@ const ProductDetailPage = () => {
             <ProductReviews 
                 itemId={product.id} 
                 reviews={product.reviews as any} 
-                averageRating={product.averageRating}
+                averageRating={product.rating}
                 onReviewAdded={() => {
                     productService.getById(product.id).then(setProduct).catch(() => {});
                 }}

@@ -214,7 +214,7 @@ const UserManagePage = () => {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-                <h1 className="section-title">👥 Quản Lý Người Dùng ({loading ? "..." : users.length})</h1>
+                <h1 className="section-title">Quản Lý Người Dùng ({loading ? "..." : users.length})</h1>
                 <button onClick={openCreateForm} className="btn-pet-primary">+ Thêm tài khoản</button>
             </div>
 

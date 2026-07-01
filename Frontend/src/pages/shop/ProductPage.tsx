@@ -48,7 +48,7 @@ const ProductPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Page header */}
             <div className="mb-6">
-                <h1 className="section-title mb-1">🛍️ Cửa Hàng</h1>
+                <h1 className="section-title mb-1">Cửa Hàng</h1>
                 <p className="text-sm text-muted-foreground">
                     {loading ? "Đang tải..." : `${total} sản phẩm`}
                 </p>

@@ -190,7 +190,7 @@ const EbookDetailPage = () => {
                                 </>
                             ) : (
                                 <>
-                                    💳 Mua Ngay với VNPay
+                                    Mua Ngay với VNPay
                                 </>
                             )}
                         </button>

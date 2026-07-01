@@ -9,7 +9,7 @@ export const canReview = async (req, res, next) => {
         const userId = req.user._id; // Lấy từ authMiddleware
         
         // Lấy productId từ body (khi post review) hoặc params (khi check quyền)
-        const productId = req.body.productId || req.params.productId; 
+        const productId = req.body.productId || req.params.productId || req.params.id; 
 
         if (!productId) {
             return res.status(400).json({ message: 'Thiếu thông tin sản phẩm (productId)' });

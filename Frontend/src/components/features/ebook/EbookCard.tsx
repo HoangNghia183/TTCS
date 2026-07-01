@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { ebookService } from "@/services/ebookService";
 import type { Ebook } from "@/services/ebookService";
+import { useWishlistStore } from "@/stores/useWishlistStore";
 import { getImageUrl } from "@/utils/format";
 
 interface EbookCardProps {
@@ -34,8 +35,21 @@ export const StarRating = ({ rating, reviewCount }: { rating: number; reviewCoun
 const EbookCard = ({ ebook }: EbookCardProps) => {
     const { user } = useAuthStore();
     const navigate = useNavigate();
-    const [wishlisted, setWishlisted] = useState(false);
+    const { toggleWishlist, isWishlisted } = useWishlistStore();
+    // We treat ebook like a product for wishlist purposes.
+    const wishlisted = isWishlisted(ebook._id);
     const [buying, setBuying] = useState(false);
+
+    const handleWishlistToggle = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!user) {
+            toast.error("Vui lòng đăng nhập để thêm vào yêu thích!");
+            navigate("/signin");
+            return;
+        }
+        await toggleWishlist({ ...ebook, id: ebook._id } as any);
+    };
 
     const handleBuyNow = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -78,7 +92,7 @@ const EbookCard = ({ ebook }: EbookCardProps) => {
 
                 {/* Wishlist */}
                 <button
-                    onClick={() => setWishlisted((p) => !p)}
+                    onClick={handleWishlistToggle}
                     aria-label="Yêu thích"
                     className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center
                      transition-all duration-200 hover:scale-110

@@ -10,13 +10,21 @@ import AuthLayout from "./layouts/AuthLayout";
 import ScrollToTop from "@/components/common/ScrollToTop";
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useWishlistStore } from "@/stores/useWishlistStore";
 
 function App() {
-  const { initializeAuth, initialized } = useAuthStore();
+  const { initializeAuth, initialized, user } = useAuthStore();
+  const { fetchWishlist } = useWishlistStore();
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  useEffect(() => {
+    if (initialized && user) {
+      fetchWishlist();
+    }
+  }, [initialized, user, fetchWishlist]);
 
   if (!initialized) {
     return (

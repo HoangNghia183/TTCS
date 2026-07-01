@@ -56,7 +56,7 @@ const MyEbooksPage = () => {
                     <Loading />
                 ) : ebooks.length === 0 ? (
                     <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border">
-                        <span className="text-5xl block mb-4">📚</span>
+
                         <h3 className="text-lg font-bold text-foreground mb-2">Bạn chưa mua eBook nào</h3>
                         <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
                             Hãy khám phá hàng ngàn tựa sách kỹ thuật số hấp dẫn tại Cửa hàng eBook của chúng tôi.

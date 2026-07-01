@@ -39,7 +39,7 @@ const WarrantyRequestPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
             <Sidebar mode="user" />
             <main className="flex-1">
-                <h1 className="section-title mb-6">🛡️ Yêu Cầu Bảo Hành</h1>
+                <h1 className="section-title mb-6">Yêu Cầu Bảo Hành</h1>
                 <div className="bg-white dark:bg-card rounded-2xl border border-border p-6 max-w-2xl">
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

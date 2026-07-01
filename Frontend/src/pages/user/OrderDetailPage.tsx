@@ -59,7 +59,7 @@ const OrderDetailPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     {/* Items */}
                     <div className="lg:col-span-2 bg-white dark:bg-card rounded-2xl border border-border p-5">
-                        <h2 className="font-bold mb-4" style={{ fontFamily: "'Nunito', sans-serif" }}>📦 Sản phẩm</h2>
+                        <h2 className="font-bold mb-4" style={{ fontFamily: "'Nunito', sans-serif" }}>Sản phẩm</h2>
                         <div className="flex flex-col gap-3">
                             {order.orderItems.map((item) => {
                                 const isEbook = item.itemModel === 'Ebook' || order.orderType === 'Ebook';
@@ -97,7 +97,7 @@ const OrderDetailPage = () => {
                         )}
                         {order.orderType === 'Ebook' && (
                             <div className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30 p-5">
-                                <h2 className="font-bold mb-2 text-blue-700 dark:text-blue-300" style={{ fontFamily: "'Nunito', sans-serif" }}>📱 eBook Kỹ Thuật Số</h2>
+                                <h2 className="font-bold mb-2 text-blue-700 dark:text-blue-300" style={{ fontFamily: "'Nunito', sans-serif" }}>eBook Kỹ Thuật Số</h2>
                                 <p className="text-sm text-muted-foreground">Sau khi thanh toán, bạn có thể tải eBook trong mục <Link to="/my-ebooks" className="text-blue-600 font-semibold hover:underline">eBook của tôi</Link>.</p>
                             </div>
                         )}

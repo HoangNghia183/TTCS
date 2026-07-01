@@ -96,17 +96,14 @@ const HomePage = () => {
         />
         <div className="hero-overlay absolute inset-0" />
 
-        <div className="absolute top-16 right-12 text-6xl animate-float opacity-90 select-none hidden md:block">📖</div>
-        <div className="absolute bottom-24 right-24 text-5xl animate-float-slow opacity-80 select-none hidden md:block">📚</div>
-        <div className="absolute top-32 right-1/3 text-4xl animate-float opacity-70 select-none hidden lg:block delay-200">🖊️</div>
-        <div className="absolute bottom-16 left-16 text-4xl animate-float-slow opacity-60 select-none hidden md:block delay-400">✨</div>
+        {/* Removed decorative float emojis */}
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30
                                         text-white text-sm font-semibold px-4 py-2 rounded-full mb-6 animate-fade-in-up">
               <span className="w-2 h-2 bg-[var(--pet-warm)] rounded-full animate-pulse" />
-              📖 Nhà sách trực tuyến hàng đầu
+              Nhà sách trực tuyến hàng đầu
             </div>
 
             <h1
@@ -115,7 +112,6 @@ const HomePage = () => {
             >
               Mang Thế Giới<br />
               <span className="text-[var(--pet-warm)]">Tri Thức</span> Về Nhà
-              <span className="ml-2">📚</span>
             </h1>
 
             <p className="text-lg text-white/85 mb-8 leading-relaxed animate-fade-in-up delay-200">
@@ -130,7 +126,7 @@ const HomePage = () => {
                                            hover:bg-[var(--pet-warm)] hover:text-foreground hover:-translate-y-1
                                            transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center gap-2 text-sm md:text-base"
               >
-                🔍 Khám Phá Ngay
+                Khám Phá Ngay
               </Link>
               <Link
                 to="/shop" id="hero-pets-btn"
@@ -138,7 +134,7 @@ const HomePage = () => {
                                            hover:bg-white/20 backdrop-blur-sm hover:-translate-y-1
                                            transition-all duration-300 flex items-center gap-2 text-sm md:text-base"
               >
-                📚 Xem Tủ Sách
+                Xem Tủ Sách
               </Link>
             </div>
 
@@ -171,7 +167,7 @@ const HomePage = () => {
         ) : (
           <ProductList
             products={pets}
-            title="Sách Nổi Bật ✨"
+            title="Sách Nổi Bật"
             subtitle="Những cuốn sách đáng đọc nhất cho bạn"
             viewAllLink="/shop?type=books"
           />
@@ -187,7 +183,7 @@ const HomePage = () => {
         ) : ebooks.length > 0 ? (
           <EbookList
             ebooks={ebooks}
-            title="eBook Bạn Sẽ Thích 📱"
+            title="eBook Bạn Sẽ Thích"
             subtitle="Đọc sách mọi lúc mọi nơi trên mọi thiết bị"
             viewAllLink="/ebook"
           />
@@ -195,7 +191,7 @@ const HomePage = () => {
       </section>
 
       {/* ============================================================ */}
-      {/*  4. WHY PETMART FEATURES                                      */}
+      {/*  4. WHY BOOKSTORE FEATURES                                      */}
       {/* ============================================================ */}
       <section className="bg-muted/40 dark:bg-muted/20 py-16 mt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -210,7 +206,7 @@ const HomePage = () => {
                 className={`feature-box bg-gradient-to-br ${f.gradient} border ${f.border} animate-fade-in-up`}
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <div className="text-4xl">{f.emoji}</div>
+
                 <h3 className="font-bold text-foreground text-sm" style={{ fontFamily: "'Nunito', sans-serif" }}>{f.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
@@ -226,12 +222,11 @@ const HomePage = () => {
       {/* ============================================================ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="rounded-3xl overflow-hidden relative bg-gradient-to-r from-[var(--pet-coral)] to-[var(--pet-mint)] p-8 md:p-12 flex flex-col md:flex-row items-center gap-6">
-          <div className="absolute top-4 right-8 text-5xl opacity-20 select-none">📖</div>
-          <div className="absolute bottom-4 right-32 text-3xl opacity-15 select-none">📚</div>
+
           <div className="flex-1 text-white text-center md:text-left">
             <p className="text-sm font-semibold uppercase tracking-widest text-white/70 mb-2">Ưu Đãi Đặc Biệt</p>
             <h2 className="text-3xl md:text-4xl font-black mb-3" style={{ fontFamily: "'Nunito', sans-serif" }}>
-              Giảm 20% Đơn Hàng<br />Đầu Tiên! 🎉
+              Giảm 20% Đơn Hàng<br />Đầu Tiên!
             </h2>
             <p className="text-white/80 text-sm">Dùng mã <strong className="text-[var(--pet-warm)]">BOOKSTORE20</strong> khi thanh toán</p>
           </div>
@@ -251,7 +246,7 @@ const HomePage = () => {
       {/* ============================================================ */}
       <section className="bg-foreground dark:bg-card py-16">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <div className="text-4xl mb-4">📬</div>
+
           <h2 className="text-2xl md:text-3xl font-black text-white mb-3" style={{ fontFamily: "'Nunito', sans-serif" }}>
             Nhận Ưu Đãi Mỗi Tuần
           </h2>
@@ -286,7 +281,7 @@ const HomePage = () => {
             <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-violet-600/20 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
             <div className="relative flex flex-col md:flex-row items-center md:items-start gap-5 flex-1">
-              <div className="text-5xl select-none">🛡️</div>
+
               <div className="text-center md:text-left">
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Khu vực quản trị</p>
                 <h2 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-violet-400 to-indigo-300 bg-clip-text text-transparent mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>
@@ -305,7 +300,7 @@ const HomePage = () => {
                                        hover:from-violet-500 hover:to-indigo-500 text-white font-bold px-7 py-3.5 rounded-2xl
                                        transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-violet-500/30 text-sm"
             >
-              ⚙️ Vào Trang Quản Trị
+              Vào Trang Quản Trị
             </Link>
           </div>
         </section>

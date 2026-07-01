@@ -387,7 +387,7 @@ const validateProductPayload = ({ name, price, description, category, stock }) =
 
 export const getProducts = async (req, res) => {
     try {
-        const features = new APIFeatures(Product.find(), req.query)
+        const features = new APIFeatures(Product.find().populate('category'), req.query)
             .search()
             .filter()
             .sort()
